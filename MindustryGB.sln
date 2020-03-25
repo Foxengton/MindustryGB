@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MindustryConsole", "Console\MindustryConsole.csproj", "{095ACC4A-4064-46D0-BA9C-33DBEB44F97D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{04A98541-0E95-412F-A687-DD13B74A35D3} = {04A98541-0E95-412F-A687-DD13B74A35D3}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MindustryLibrary", "MindustryLibrary\MindustryLibrary.csproj", "{04A98541-0E95-412F-A687-DD13B74A35D3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{095ACC4A-4064-46D0-BA9C-33DBEB44F97D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{095ACC4A-4064-46D0-BA9C-33DBEB44F97D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{095ACC4A-4064-46D0-BA9C-33DBEB44F97D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{095ACC4A-4064-46D0-BA9C-33DBEB44F97D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04A98541-0E95-412F-A687-DD13B74A35D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04A98541-0E95-412F-A687-DD13B74A35D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04A98541-0E95-412F-A687-DD13B74A35D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04A98541-0E95-412F-A687-DD13B74A35D3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {696AE752-6676-4323-A0CF-6DB2213A75B1}
+	EndGlobalSection
+EndGlobal
