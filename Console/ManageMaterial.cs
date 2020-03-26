@@ -108,6 +108,8 @@ namespace MindustryConsole
 				Console.WriteLine("║2├─┤ Done         ║");
 				Console.WriteLine("╟─┘ └──────────────╢");
 				Console.WriteLine("╚══════════════════╝");
+				Console.WriteLine("Result: {0};", NormalizateItems(items));
+
 				ShowAll(Material.materials, OnlyAvailable, offset); //Show all items
 				Console.Write("> ");
 				select = Formations.GetInt(Console.ReadLine());
