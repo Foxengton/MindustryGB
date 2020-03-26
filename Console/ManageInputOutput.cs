@@ -32,8 +32,22 @@ namespace MindustryConsole
 				switch (select)
 				{
 					case '0': break;
-					case '1': inputOutput.Input = ManageMaterial.SetItems(); break;
-					case '2': inputOutput.Output = ManageMaterial.SetItems(false, true); break;
+					case '1':
+						{
+							string input = ManageMaterial.SetItems();
+
+							if (input != null)
+								inputOutput.Input = input;
+							break;
+						}
+					case '2':
+						{
+							string output = ManageMaterial.SetItems(false, true);
+
+							if (output != null)
+								inputOutput.Output = output;
+							break;
+						}	
 					case '3': inputOutput.ProductionTime = SetValue("Production Time"); break;
 					case '9': inputOutput.Save(); break;
 					default: Formations.NotFound("Action"); break;

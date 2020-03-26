@@ -36,9 +36,8 @@ namespace MindustryConsole
 				else if (select > 0)
 					Update(new Material { Id = Material.NextId });
 				else if (select != 0) Formations.NotFound("Action");
-
 			}
-			while (select != '0');
+			while (select != 0);
 		}
 
 		public static Material Select(bool onlyAvailable = false)
@@ -135,7 +134,10 @@ namespace MindustryConsole
 			}
 			while (select != 0 && onlyOne == false);
 
-			return string.Join(";", items);
+			if (select != 0)
+				return string.Join(";", items);
+			else
+				return null;
 		}
 
 		public static string NormalizateItems(string[] items)

@@ -52,6 +52,8 @@ namespace MindustryLibrary
 			}
 
 			generals = Load();
+
+			InputOutput.AllRefresh(Id, false);
 		}
 
 		private void CalculateWeight()

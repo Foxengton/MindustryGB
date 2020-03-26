@@ -46,8 +46,17 @@ namespace MindustryLibrary
 
 			inputsOutputs = Load();
 		}
-		public void Delete()
+		public void Delete(bool generalDeleted = false)
 		{
+			if (!generalDeleted)
+			{
+				string weight = CalculateWeight().ToString();
+
+				for (int i = 0; i < Material.materials.Length; i++)
+					if (Material.materials[i].Weight == weight)
+						Material.Reset();
+			}
+
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
 			{
 				cnn.Execute($"DELETE FROM InputsOutputs WHERE id = @Id;", this);
@@ -56,14 +65,15 @@ namespace MindustryLibrary
 			inputsOutputs = Load();
 		}
 
-		private void CalculateWeight()
+		private double CalculateWeight()
 		{
 			double inputWeight = 0;
 			double baseWeight = 0;
+			double totalWeight = 0;
 
 			//If owner have not a weight
 			if (General.generals.Where(gen => gen.Id == GeneralId).ToArray()[0].Weight == null)
-				return;
+				return 0;
 			else
 				baseWeight = Convert.ToDouble(General.generals.Where(gen => gen.Id == GeneralId).ToArray()[0].Weight);
 
@@ -77,7 +87,7 @@ namespace MindustryLibrary
 					if (input[i] != "" && Material.materials[i].Weight == null)
 					{
 						Weight = null;
-						return;
+						return 0;
 					}
 
 					//Set input weight
@@ -100,18 +110,24 @@ namespace MindustryLibrary
 						inputWeight *= multiplier;
 						baseWeight *= multiplier;
 
+						totalWeight = Math.Round((inputWeight + baseWeight) * 100) / 100;
+
 						Weight = (Math.Round(inputWeight * 100) / 100).ToString(); //Set weight
-						Material.CheckWeight(i, Math.Round((inputWeight + baseWeight) * 100) / 100); //Check weight
-						break;
+						Material.CheckWeight(i, totalWeight); //Check weight
+						return totalWeight;
 					}
 				}
 			} //Output not null
+
+			return 0;
 		}
-		public static void AllRefresh(string id)
+		public static void AllRefresh(string id, bool save = true)
 		{
 			for (int i = 0; i < inputsOutputs.Length; i++)
-				if (inputsOutputs[i].GeneralId == id)
+				if (inputsOutputs[i].GeneralId == id && save)
 					inputsOutputs[i].Save();
+				else if(inputsOutputs[i].GeneralId == id && !save)
+					inputsOutputs[i].Delete(true);
 		}
 
 		public string Id { get; set; }

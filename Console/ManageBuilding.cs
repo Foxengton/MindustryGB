@@ -37,7 +37,6 @@ namespace MindustryConsole
 		{
 			General[] generals = General.generals.Where(gen => gen.Id == id).ToArray();
 			InputOutput[] inputsOutputs = InputOutput.inputsOutputs.Where(io => io.GeneralId == id).ToArray();
-			int totalWidth = 17;
 			string[] select;
 
 			do
@@ -45,19 +44,22 @@ namespace MindustryConsole
 				ShowAll(generals);
 
 				Console.WriteLine("╔════════╡ SELECT ╞═══════╗");
-				Console.WriteLine("╟───┐ ┌─{0,17}─╢", "─".PadLeft(totalWidth, '─'));
-				Console.WriteLine("║0  ├─┤ {0,17} ║", "Exit".PadRight(totalWidth, ' '));
+				Console.WriteLine("╟───┐ ┌───────────────────╢");
+				Console.WriteLine("║ 0 ├─┤ Exit              ║");
 
 				//General
-				if (generals.Length != 0) Console.WriteLine("║1  ├─┤ {0,17} ║", "Edit general".PadRight(totalWidth, ' '));
-				else Console.WriteLine("║1  ├─┤ {0,17} ║", "Add general".PadRight(totalWidth, ' '));
+				if (generals.Length != 0)
+					Console.WriteLine("║ 1 ├─┤ Edit general      ║");
+				else
+					Console.WriteLine("║ 1 ├─┤ Add general       ║");
 
 				//Input/Output
-				Console.WriteLine("║5 0├─┤ {0,17} ║", "Add Input/Output".PadRight(totalWidth, ' '));
+				Console.WriteLine("║5 0├─┤ Add Input/Output  ║");
 				for (int i = 0; i < inputsOutputs.Length; i++)
-					Console.WriteLine("║5 {1}├─┤ {0,17} ║", "Edit Input/Output".PadRight(totalWidth, ' '), i + 1);
+					Console.WriteLine("║5 {0}├─┤ Edit Input/Output ║", i + 1);
 
-				Console.WriteLine("╟───┘ └─{0,17}─╢", "─".PadLeft(totalWidth, '─'));
+				Console.WriteLine("║ 9 ├─┤ Delete            ║");
+				Console.WriteLine("╟───┘ └───────────────────╢");
 				Console.WriteLine("╚═════════════════════════╝");
 				Console.Write("> ");
 				select = Console.ReadLine().Split(' ');
@@ -73,7 +75,7 @@ namespace MindustryConsole
 							{
 								int subaction = Formations.GetInt(select[1]) - 1;
 
-								if (subaction > 0 && subaction < inputsOutputs.Length)
+								if (subaction >= 0 && subaction < inputsOutputs.Length)
 									ManageInputOutput.Update(inputsOutputs[subaction]);
 								else if(subaction == -1)
 									ManageInputOutput.Update(new InputOutput { Id = InputOutput.NextId, GeneralId = id });
@@ -84,6 +86,7 @@ namespace MindustryConsole
 								Formations.NotFound("Action");
 							break;
 						}
+					case "9": generals[0].Delete(); break;
 					default: Formations.NotFound("Action"); break;
 				}
 			}
