@@ -17,23 +17,25 @@ namespace MindustryConsole
 				Console.WriteLine("╔════════╡ MENU ╞════════╗");
 				Console.WriteLine("╟─┐ ┌────────────────────╢");
 				Console.WriteLine("║0├─┤Exit                ║");
-				Console.WriteLine("║1├─┤Manager Building    ║");
-				Console.WriteLine("║2├─┤Manager Material    ║");
+				Console.WriteLine("║1├─┤Calculator          ║");
+				Console.WriteLine("║2├─┤Manager Building    ║");
+				Console.WriteLine("║3├─┤Manager Material    ║");
 				Console.WriteLine("╟─┘ └────────────────────╢");
 				Console.WriteLine("╚════════════════════════╝");
 				Console.Write("> ");
 				select = Console.ReadKey().KeyChar;
 				Console.Clear();
 
-				switch (select)
+				if (select == 0) return;
+				else if (select == 1)
 				{
-					case '0': break;
-					case '1': ManageBuilding.Menu(); break;
-					case '2': ManageMaterial.Menu(); break;
-					default: Formations.NotFound("Action"); break;
+
 				}
+				else if (select == 2) ManageBuilding.Menu();
+				else if (select == 3) ManageMaterial.Menu();
+				else Formations.NotFound("Action");
 			}
-			while (select != '0');
+			while (true);
 		}
 	}
 }

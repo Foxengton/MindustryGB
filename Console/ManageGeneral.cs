@@ -33,20 +33,25 @@ namespace MindustryConsole
 
 				Console.Clear();
 
-				switch (select)
+				if (select == '0') return;
+				else if (select == '1') general.Name = Formations.SetValue("name", "string");
+				else if (select == '2') general.Type = Formations.SetValue("type", "string");
+				else if (select == '3') general.Description = Formations.SetValue("description", "string");
+				else if (select == '4') general.Health = Formations.SetValue("health", "int");
+				else if (select == '5') general.Size = Formations.SetValue("size", "size");
+				else if (select == '6') general.BuildTime = Formations.SetValue("build Time", "double");
+				else if (select == '7')
 				{
-					case '0': break;
-					case '1': general.Name = Formations.SetValue("name", "string"); break;
-					case '2': general.Type = Formations.SetValue("type", "string"); break;
-					case '3': general.Description = Formations.SetValue("description", "string"); break;
-					case '4': general.Health = Formations.SetValue("health", "int"); break;
-					case '5': general.Size = Formations.SetValue("size", "size"); break;
-					case '6': general.BuildTime = Formations.SetValue("build Time", "double"); break;
-					case '7': general.BuildCost = ManageMaterial.SetItems(); break;
-					case '8': general.Mod = Formations.SetValue("mod", "string"); break;
-					case '9': general.Save(); break;
-					default: Formations.NotFound("Action"); break;
+					string buildCost = ManageMaterial.SetItems();
+					if (buildCost != "") general.BuildCost = buildCost;
 				}
+				else if (select == '8') general.Mod = Formations.SetValue("mod", "string");
+				else if (select == '9')
+				{
+					general.Save();
+					return;
+				}
+				else Formations.NotFound("Action");
 			}
 			while (select != '0');
 		}

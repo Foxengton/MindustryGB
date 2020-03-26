@@ -27,31 +27,32 @@ namespace MindustryConsole
 				select = Console.ReadKey().KeyChar;
 				Console.Clear();
 
-				switch (select)
+				if (select == '0')
 				{
-					case '0': break;
-					case '1':
-						{
-							string input = ManageMaterial.SetItems();
-
-							if (input != "")
-								inputOutput.Input = input;
-							break;
-						}
-					case '2':
-						{
-							string output = ManageMaterial.SetItems(false, true);
-
-							if (output != "")
-								inputOutput.Output = output;
-							break;
-						}	
-					case '3': inputOutput.ProductionTime = SetValue("Production Time"); break;
-					case '9': inputOutput.Save(); break;
-					default: Formations.NotFound("Action"); break;
+					return;
 				}
+				else if (select == '1')
+				{
+					string input = ManageMaterial.SetItems();
+					if (input != "") inputOutput.Input = input;
+				}
+				else if (select == '2')
+				{
+					string output = ManageMaterial.SetItems(false, true);
+					if (output != "") inputOutput.Output = output;
+				}
+				else if (select == '3')
+				{
+					inputOutput.ProductionTime = SetValue("Production Time");
+				}
+				else if (select == '9')
+				{
+					inputOutput.Save();
+					return;
+				}
+				else Formations.NotFound("Action");
 			}
-			while (select != '0');
+			while (true);
 		}
 
 		private static string SetValue(string header)
