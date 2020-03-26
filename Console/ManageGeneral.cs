@@ -14,7 +14,6 @@ namespace MindustryConsole
 			char select;
 			do
 			{
-				Console.Clear();
 				Console.WriteLine("═════════╡ GENERAL ╞═════════");
 				Console.WriteLine("ID: {0}", general.Id);
 				Console.WriteLine("[1] Name: {0}", general.Name);
@@ -31,6 +30,8 @@ namespace MindustryConsole
 
 				Console.Write("> ");
 				select = Console.ReadKey().KeyChar;
+
+				Console.Clear();
 
 				switch (select)
 				{

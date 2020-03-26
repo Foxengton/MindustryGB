@@ -28,27 +28,28 @@ namespace MindustryConsole
 					Select(General.generals[select - offset].Id);
 				else if (select > 0)
 					ManageGeneral.Update(new General { Id = General.NextId });
-				else if (select != 0) Formations.NotFound("Action");
+				else if (select != 0)
+					Formations.NotFound("Action");
 			}
 			while (select != 0);
 		}
 
 		private static void Select(string id)
 		{
-			General[] generals = General.generals.Where(gen => gen.Id == id).ToArray();
+			General general = General.generals.Where(gen => gen.Id == id).ToArray()[0];
 			InputOutput[] inputsOutputs = InputOutput.inputsOutputs.Where(io => io.GeneralId == id).ToArray();
 			string[] select;
 
 			do
 			{
-				ShowAll(generals);
+				ShowInfo(general, inputsOutputs);
 
 				Console.WriteLine("╔════════╡ SELECT ╞═══════╗");
 				Console.WriteLine("╟───┐ ┌───────────────────╢");
 				Console.WriteLine("║ 0 ├─┤ Exit              ║");
 
 				//General
-				if (generals.Length != 0)
+				if (general != null)
 					Console.WriteLine("║ 1 ├─┤ Edit general      ║");
 				else
 					Console.WriteLine("║ 1 ├─┤ Add general       ║");
@@ -68,7 +69,7 @@ namespace MindustryConsole
 				switch (select[0])
 				{
 					case "0": break;
-					case "1": ManageGeneral.Update(generals[0]); break;
+					case "1": ManageGeneral.Update(general); break;
 					case "5":
 						{
 							if (select.Length == 2)
@@ -86,7 +87,7 @@ namespace MindustryConsole
 								Formations.NotFound("Action");
 							break;
 						}
-					case "9": generals[0].Delete(); break;
+					case "9": general.Delete(); select[0] = "0"; break;
 					default: Formations.NotFound("Action"); break;
 				}
 			}
@@ -106,23 +107,52 @@ namespace MindustryConsole
 			Console.WriteLine("└────┴──────────────────┴───────┴─────────┴───────┴──────────────┴──────────┴───────────────────────┴────────────┘");
 		}
 
-		private static void ShowInfo(General general)
+		private static void ShowInfo(General general, InputOutput[] inputsOutputs)
 		{
-			Console.Clear();
-			Console.WriteLine("═════════╡ INFO ╞═════════");
-
+			Console.WriteLine("══════════════╡ INFO ╞══════════════");
 			if (general.Id != null) Console.Write("[{0}]", general.Id);
 			if (general.Name != null) Console.Write(" {0}", general.Name);
 			if (general.Type != null) Console.Write(" ({0})", general.Type);
 			Console.WriteLine();
 			if (general.Description != null) Console.WriteLine("──────────────────────────────────────────────────\n{0}\n──────────────────────────────────────────────────", general.Description);
 
-			Formations.Header("────┤ GENERAL ├────");
+			Formations.Header("────────────┤ GENERAL ├─────────────");
 			if (general.Health != null) Console.WriteLine("\tHealth: {0}", general.Health);
 			if (general.Size != null) Console.WriteLine("\tSize: {0}", general.Size);
 			if (general.BuildTime != null) Console.WriteLine("\tBuild Time: {0}", general.BuildTime);
-			//if (general.buildCost != null) Console.WriteLine("\tBuild Cost: {0}", NormalizateItems(general.buildCost.Split(';')));
+			if (general.BuildCost != null) Console.WriteLine("\tBuild Cost: {0}", ManageMaterial.NormalizateItems(general.BuildCost.Split(';')));
 			if (general.Weight != null) Console.WriteLine("\tWeight: {0}", general.Weight);
+
+			if (inputsOutputs.Length != 0)
+			{
+				string input = string.Empty;
+				string output = string.Empty;
+
+				for (int i = 0; i < inputsOutputs.Length; i++)
+				{
+					if (inputsOutputs[i].Input != null)
+					{
+						if (input == string.Empty)
+							input = ManageMaterial.NormalizateItems(inputsOutputs[i].Input.Split(';'));
+						else if (inputsOutputs[i].Input != inputsOutputs[i - 1].Input)
+							input += " / " + ManageMaterial.NormalizateItems(inputsOutputs[i].Input.Split(';'));
+					}
+					if (inputsOutputs[i].Output != null)
+					{
+						if (output == string.Empty)
+							output = ManageMaterial.NormalizateItems(inputsOutputs[i].Output.Split(';'));
+						else if (inputsOutputs[i].Output != inputsOutputs[i - 1].Output)
+							output += " / " + ManageMaterial.NormalizateItems(inputsOutputs[i].Output.Split(';'));
+					}
+				}
+
+				Formations.Header("────────┤ INPUT/OUTPUT ├────────");
+				if (input != string.Empty)
+					Console.WriteLine("Input: {0}", input);
+				if (input != string.Empty)
+					Console.WriteLine("Output: {0}", output);
+				Console.WriteLine("Production Time: {0} second", inputsOutputs[0].ProductionTime);
+			}
 		}
 	}
 }
