@@ -152,7 +152,7 @@ namespace MindustryConsole
 			string result = string.Empty;
 
 			for (int i = 0; i < Material.materials.Length; i++)
-				if (items[i] != "") result += $"{items[i]} {Material.materials[i].Name} ";
+				if (items[i] != "" && items[i] != null) result += $"{items[i]} {Material.materials[i].Name} ";
 
 			return result;
 		}
