@@ -36,7 +36,7 @@ namespace MindustryConsole
 						{
 							string input = ManageMaterial.SetItems();
 
-							if (input != null)
+							if (input != "")
 								inputOutput.Input = input;
 							break;
 						}
@@ -44,7 +44,7 @@ namespace MindustryConsole
 						{
 							string output = ManageMaterial.SetItems(false, true);
 
-							if (output != null)
+							if (output != "")
 								inputOutput.Output = output;
 							break;
 						}	

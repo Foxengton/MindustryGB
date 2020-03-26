@@ -116,12 +116,12 @@ namespace MindustryConsole
 			Console.WriteLine();
 			if (general.Description != null) Console.WriteLine("──────────────────────────────────────────────────\n{0}\n──────────────────────────────────────────────────", general.Description);
 
-			Formations.Header("────────────┤ GENERAL ├─────────────");
-			if (general.Health != null) Console.WriteLine("\tHealth: {0}", general.Health);
-			if (general.Size != null) Console.WriteLine("\tSize: {0}", general.Size);
-			if (general.BuildTime != null) Console.WriteLine("\tBuild Time: {0}", general.BuildTime);
-			if (general.BuildCost != null) Console.WriteLine("\tBuild Cost: {0}", ManageMaterial.NormalizateItems(general.BuildCost.Split(';')));
-			if (general.Weight != null) Console.WriteLine("\tWeight: {0}", general.Weight);
+			Formations.Header("GENERAL");
+			if (general.Health != null) Console.WriteLine(" Health: {0}", general.Health);
+			if (general.Size != null) Console.WriteLine(" Size: {0}", general.Size);
+			if (general.BuildTime != null) Console.WriteLine(" Build Time: {0}", general.BuildTime);
+			if (general.BuildCost != null) Console.WriteLine(" Build Cost: {0}", ManageMaterial.NormalizateItems(general.BuildCost.Split(';')));
+			if (general.Weight != null) Console.WriteLine(" Weight: {0}", general.Weight);
 
 			if (inputsOutputs.Length != 0)
 			{
@@ -142,16 +142,16 @@ namespace MindustryConsole
 						if (output == string.Empty)
 							output = ManageMaterial.NormalizateItems(inputsOutputs[i].Output.Split(';'));
 						else if (inputsOutputs[i].Output != inputsOutputs[i - 1].Output)
-							output += " / " + ManageMaterial.NormalizateItems(inputsOutputs[i].Output.Split(';'));
+							output += "/ " + ManageMaterial.NormalizateItems(inputsOutputs[i].Output.Split(';'));
 					}
 				}
 
-				Formations.Header("────────┤ INPUT/OUTPUT ├────────");
+				Formations.Header("INPUT/OUTPUT");
 				if (input != string.Empty)
-					Console.WriteLine("Input: {0}", input);
-				if (input != string.Empty)
-					Console.WriteLine("Output: {0}", output);
-				Console.WriteLine("Production Time: {0} second", inputsOutputs[0].ProductionTime);
+					Console.WriteLine(" Input: {0}", input);
+				if (output != string.Empty)
+					Console.WriteLine(" Output: {0}", output);
+				Console.WriteLine(" Production Time: {0} second", inputsOutputs[0].ProductionTime);
 			}
 		}
 	}

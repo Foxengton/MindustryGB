@@ -52,12 +52,10 @@ namespace MindustryConsole
 			Console.WriteLine("╚════════════════════╝");
 			ShowAll(Material.materials, onlyAvailable, offset);
 			Console.Write("> ");
-
 			select = Formations.GetInt(Console.ReadLine());
 			Console.Clear();
 
-			if (select >= offset)
-				return Material.materials[select - offset];
+			if (select >= offset) return Material.materials[select - offset];
 
 			return null;
 		}
@@ -97,7 +95,7 @@ namespace MindustryConsole
 
 		public static string SetItems(bool OnlyAvailable = true, bool onlyOne = false)
 		{
-			int offset = 2;
+			int offset = 3;
 			int select;
 			string[] items = new string[Material.materials.Length];
 
@@ -105,39 +103,47 @@ namespace MindustryConsole
 			{
 				Console.WriteLine("╔═════╡ MENU ╞═════╗");
 				Console.WriteLine("╟─┐ ┌──────────────╢");
-				Console.WriteLine("║0├─┤ Exit         ║");
+				Console.WriteLine("║0├─┤ Cancel       ║");
 				Console.WriteLine("║1├─┤ Set Null     ║");
+				Console.WriteLine("║2├─┤ Done         ║");
 				Console.WriteLine("╟─┘ └──────────────╢");
 				Console.WriteLine("╚══════════════════╝");
-				ShowAll(Material.materials, OnlyAvailable, offset);
+				ShowAll(Material.materials, OnlyAvailable, offset); //Show all items
 				Console.Write("> ");
 				select = Formations.GetInt(Console.ReadLine());
 				Console.Clear();
 
-				if (select >= offset && select < Material.materials.Length + offset)
+				if (select == 0) return ""; //Cancel
+				else if (select == 1) return null; //Set Null
+				else if (select == 2) return string.Join(";", items); //Done
+				else if (select >= offset && select < Material.materials.Length + offset)
 				{
-					select -= offset;
-					Console.WriteLine("══════╡ ENTER {0} ╞══════", Material.materials[select].Name.ToUpper());
-					Console.Write("> ");
-					double amount = Formations.GetDouble(Console.ReadLine());
+					bool repeat; //If result have error
 
-					if (amount != -1)
-						items[select] = amount.ToString();
-					else
-						Formations.NotCorrect("Amount");
-				}
-				else if (select == 1)
-				{
-					return null;
-				}
-				else select = 0;
+					do
+					{
+						repeat = false;
+
+						select -= offset; //delete offset
+
+						Console.WriteLine("══════╡ ENTER {0} ╞══════", Material.materials[select].Name.ToUpper());
+						Console.Write("> ");
+
+						double amount = Formations.GetDouble(Console.ReadLine()); //Get amount of items
+
+						if (amount > 0) items[select] = amount.ToString();
+						else if (amount == 0) break;
+						else
+						{
+							Formations.NotCorrect("Amount");
+							repeat = true;
+						}
+					}
+					while (repeat);
+				} //Select item
+				else Formations.NotCorrect("Amount"); //Error
 			}
-			while (select != 0 && onlyOne == false);
-
-			if (select != 0)
-				return string.Join(";", items);
-			else
-				return null;
+			while (true);
 		}
 
 		public static string NormalizateItems(string[] items)
