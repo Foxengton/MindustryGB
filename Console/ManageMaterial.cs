@@ -122,21 +122,20 @@ namespace MindustryConsole
 
 					do
 					{
-						repeat = false;
-
+						repeat = false; //No repeat do_while
 						select -= offset; //delete offset
 
 						Console.WriteLine("══════╡ ENTER {0} ╞══════", Material.materials[select].Name.ToUpper());
 						Console.Write("> ");
-
 						double amount = Formations.GetDouble(Console.ReadLine()); //Get amount of items
+						Console.Clear();
 
 						if (amount > 0) items[select] = amount.ToString();
 						else if (amount == 0) break;
 						else
 						{
 							Formations.NotCorrect("Amount");
-							repeat = true;
+							repeat = true; //Repeat do_while
 						}
 					}
 					while (repeat);

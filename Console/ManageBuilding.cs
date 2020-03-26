@@ -25,7 +25,7 @@ namespace MindustryConsole
 				Console.Clear();
 
 				if (select >= offset && select < General.generals.Length + offset)
-					Select(General.generals[select - offset].Id);
+					Select(select - offset);
 				else if (select > 0)
 					ManageGeneral.Update(new General { Id = General.NextId });
 				else if (select != 0)
@@ -34,14 +34,15 @@ namespace MindustryConsole
 			while (select != 0);
 		}
 
-		private static void Select(string id)
+		private static void Select(int id)
 		{
-			General general = General.generals.Where(gen => gen.Id == id).ToArray()[0];
-			InputOutput[] inputsOutputs = InputOutput.inputsOutputs.Where(io => io.GeneralId == id).ToArray();
 			string[] select;
 
 			do
 			{
+				General general = General.generals[id];
+				InputOutput[] inputsOutputs = InputOutput.inputsOutputs.Where(io => io.GeneralId == general.Id).ToArray();
+
 				ShowInfo(general, inputsOutputs);
 
 				Console.WriteLine("╔════════╡ SELECT ╞═══════╗");
@@ -79,7 +80,7 @@ namespace MindustryConsole
 								if (subaction >= 0 && subaction < inputsOutputs.Length)
 									ManageInputOutput.Update(inputsOutputs[subaction]);
 								else if(subaction == -1)
-									ManageInputOutput.Update(new InputOutput { Id = InputOutput.NextId, GeneralId = id });
+									ManageInputOutput.Update(new InputOutput { Id = InputOutput.NextId, GeneralId = general.Id });
 								else
 									Formations.NotFound("SubAction");
 							}

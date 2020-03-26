@@ -23,10 +23,8 @@ namespace MindustryConsole
 				Console.WriteLine("Weight: {0}", inputOutput.Weight);
 				Console.WriteLine("[9] Save");
 				Console.WriteLine("[0] Exit");
-
 				Console.Write("> ");
 				select = Console.ReadKey().KeyChar;
-
 				Console.Clear();
 
 				switch (select)
@@ -58,10 +56,11 @@ namespace MindustryConsole
 
 		private static string SetValue(string header)
 		{
-			Console.Clear();
 			Console.WriteLine("═════════╡ ENTER {0} ╞═════════", header.ToUpper());
 			Console.Write("> ");
-			return Console.ReadLine();
+			string value = Console.ReadLine();
+			Console.Clear();
+			return value;
 		}
 	}
 }
