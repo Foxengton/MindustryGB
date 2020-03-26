@@ -147,6 +147,30 @@ namespace MindustryConsole
 			while (true);
 		}
 
+		public static int GetIndex()
+		{
+			int offset = 1;
+			int select;
+
+			do
+			{
+				Console.WriteLine("╔═════╡ GET INDEX ╞═════╗");
+				Console.WriteLine("╟─┐ ┌───────────────────╢");
+				Console.WriteLine("║0├─┤ Cancel            ║");
+				Console.WriteLine("╟─┘ └───────────────────╢");
+				Console.WriteLine("╚═══════════════════════╝");
+				ShowAll(Material.materials, true, offset); //Show all items
+				Console.Write("> ");
+				select = Formations.GetInt(Console.ReadLine());
+				Console.Clear();
+
+				if (select == 0) return -1; //Cancel
+				else if (select >= offset && select < Material.materials.Length + offset) return select - offset;
+				else Formations.NotCorrect("Amount"); //Error
+			}
+			while (true);
+		}
+
 		public static string NormalizateItems(string[] items)
 		{
 			string result = string.Empty;

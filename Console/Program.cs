@@ -26,13 +26,10 @@ namespace MindustryConsole
 				select = Console.ReadKey().KeyChar;
 				Console.Clear();
 
-				if (select == 0) return;
-				else if (select == 1)
-				{
-
-				}
-				else if (select == 2) ManageBuilding.Menu();
-				else if (select == 3) ManageMaterial.Menu();
+				if (select == '0') return;
+				else if (select == '1') ManageCalculator.Menu();
+				else if (select == '2') ManageBuilding.Menu();
+				else if (select == '3') ManageMaterial.Menu();
 				else Formations.NotFound("Action");
 			}
 			while (true);

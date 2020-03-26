@@ -65,6 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ManageCalculator.cs" />
     <Compile Include="Formations.cs" />
     <Compile Include="ManageBuilding.cs" />
     <Compile Include="ManageGeneral.cs" />

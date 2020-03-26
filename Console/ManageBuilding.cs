@@ -24,14 +24,16 @@ namespace MindustryConsole
 				select = Formations.GetInt(Console.ReadLine());
 				Console.Clear();
 
-				if (select >= offset && select < General.generals.Length + offset)
-					Select(select - offset);
+				if (select == 0) return;
+				else if (select >= offset && select < General.generals.Length + offset) Select(select - offset);
 				else if (select > 0)
+				{
 					ManageGeneral.Update(new General { Id = General.NextId });
-				else if (select != 0)
-					Formations.NotFound("Action");
+					Select(General.generals.Length - 1);
+				}
+				else Formations.NotFound("Action");
 			}
-			while (select != 0);
+			while (true);
 		}
 
 		private static void Select(int id)
