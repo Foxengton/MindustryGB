@@ -8,41 +8,38 @@ namespace MindustryLibrary
 {
 	public class General
 	{
+		//===== WORKS WITH DATABASE =====//
 		public static General[] Load()
 		{
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
 			{
-				return cnn.Query<General>("SELECT * FROM Generals;", new DynamicParameters()).ToArray();
+				return cnn.Query<General>("SELECT * FROM Generals ORDER BY Mod, Type, Name;", new DynamicParameters()).ToArray();
 			}
 		}
 		public void Save()
 		{
 			CalculateWeight();
 
-			if (generals.Where(gen => gen.Id == Id).Count() != 0)
+			if (Generals.Where(gen => gen.Id == Id).Count() != 0)
 			{
 				Update();
 				return;
 			}
 
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
-				{
-					cnn.Execute($"INSERT INTO Generals VALUES(@Id, @Name, @Description, @Type, @Health, @Size, @BuildTime, @BuildCost, @Mod, @Weight);", this);
-				}
-
-			generals = Load();
+			{
+				cnn.Execute($"INSERT INTO Generals VALUES(@Id, @Name, @Description, @Type, @Health, @Size, @BuildTime, @BuildCost, @Mod, @Weight);", this);
+			}
 		}
 		public void Update()
 		{
-			if (BuildCost != generals.Where(gen => gen.Id == Id).ToArray()[0].BuildCost)
+			if (BuildCost != Generals.Where(gen => gen.Id == Id).ToArray()[0].BuildCost)
 				CalculateWeight();
 
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
 			{
 				cnn.Execute($"UPDATE Generals SET name = @Name, description = @Description, type = @Type, health = @Health, size = @Size, buildTime = @BuildTime, buildCost = @BuildCost, mod = @Mod, weight = @Weight WHERE id = @Id;", this);
 			}
-
-			generals = Load();
 		}
 		public void Delete()
 		{
@@ -51,45 +48,10 @@ namespace MindustryLibrary
 				cnn.Execute($"DELETE FROM Generals WHERE id = @Id;", this);
 			}
 
-			generals = Load();
-
 			InputOutput.AllRefresh(Id, false);
 		}
 
-		private void CalculateWeight()
-		{
-			string[] buildCost = BuildCost.Split(';');
-			double weight = 0;
-
-			for (int i = 0; i < Material.materials.Length; i++)
-			{
-				if (buildCost[i] != "" && Material.materials[i].Weight == null)
-				{
-					Weight = null;
-					return;
-				}
-
-				if (buildCost[i] != "")
-					weight += Convert.ToDouble(buildCost[i]) * Convert.ToDouble(Material.materials[i].Weight);
-			}
-
-			Weight = (Math.Round(weight * 100) / 100).ToString();
-
-			InputOutput.AllRefresh(Id);
-		}
-		public static void AllRefresh(int newMaterial = -1)
-		{
-			if (newMaterial != -1)
-			{
-				for (int i = 0; i < generals.Length; i++)
-					if (generals[i].BuildCost.Split(';')[newMaterial] != "")
-						generals[i].Save();
-			}
-			else
-				for (int i = 0; i < generals.Length; i++)
-					generals[i].Save();
-		}
-
+		//===== VARIABLE =====//
 		public string Id { get; set; }
 		public string Name { get; set; }
 		public string Description { get; set; }
@@ -101,7 +63,51 @@ namespace MindustryLibrary
 		public string Mod { get; set; }
 		public string Weight { get; set; }
 
-		public static General[] generals = Load();
-		public static string NextId { get => generals.Length == 0 ? "1" : (Convert.ToInt32(generals[generals.Length - 1].Id) + 1).ToString(); }
+		private void CalculateWeight()
+		{
+			Weight = null;
+			string[] buildCost = BuildCost.Split(';');
+			double weight = 0;
+
+			for (int i = 0; i < buildCost.Length; i++)
+			{
+				string materialWeight = Material.GetMaterial(buildCost[i].Split(' ').First()).Weight; //Get id of material
+				double amount = Convert.ToDouble(buildCost[i].Split(' ').Last()); //Get amount of material
+
+				if (materialWeight == null) return;
+
+				weight += amount * Convert.ToDouble(materialWeight);
+			} //Calculate weight
+
+			Weight = (Math.Round(weight * 100) / 100).ToString();
+
+			InputOutput.AllRefresh(Id);
+		}
+
+
+		public static General GetGeneral(string id) => Generals.First(gen => gen.Id == id);
+		public static void Refresh(string materialId = "-1")
+		{
+			if (materialId == "-1")
+			{
+				for (int i = 0; i < Generals.Length; i++)
+					Generals[i].Save();
+			}
+			else
+			{
+				for (int i = 0; i < Generals.Length; i++)
+				{
+					string[] items = Generals[i].BuildCost.Split(';');
+
+					for (int x = 0; x < items.Length; x++)
+						if (items[x].Split(' ').First() == materialId)
+							Generals[i].Save();
+				}
+			}
+		}
+
+		public static General[] Generals => Load();
+		public static int Count => Generals.Count();
+		public static string NextId => (Convert.ToInt32(Generals.Max(gen => Convert.ToInt32(gen.Id))) + 1).ToString();
 	}
 }

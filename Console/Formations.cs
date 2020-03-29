@@ -30,10 +30,11 @@ namespace MindustryConsole
 
 		public static string SetValue(string header, string type)
 		{
-			Console.Clear();
+			
 			Console.WriteLine("═════════╡ ENTER {0} ╞═════════", header.ToUpper());
 			Console.Write("> ");
 			string select = Console.ReadLine();
+			Console.Clear();
 
 			if (select == "null")
 				return null;

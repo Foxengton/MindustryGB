@@ -1,9 +1,5 @@
 ﻿using MindustryLibrary;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MindustryConsole
 {
@@ -22,7 +18,7 @@ namespace MindustryConsole
 				Console.WriteLine("[4] Health: {0}", general.Health);
 				Console.WriteLine("[5] Size: {0}", general.Size);
 				Console.WriteLine("[6] Build Time: {0}", general.BuildTime);
-				Console.WriteLine("[7] Build Cost: {0}", general.BuildCost == null ? "null" : ManageMaterial.NormalizateItems(general.BuildCost.Split(';')));
+				Console.WriteLine("[7] Build Cost: {0}", general.BuildCost == null ? "null" : ManageMaterial.NormalizateItems(general.BuildCost));
 				Console.WriteLine("[8] Mod: {0}", general.Mod);
 				Console.WriteLine("Weight: {0}", general.Weight);
 				Console.WriteLine("[9] Save");
@@ -30,7 +26,6 @@ namespace MindustryConsole
 
 				Console.Write("> ");
 				select = Console.ReadKey().KeyChar;
-
 				Console.Clear();
 
 				if (select == '0') return;
@@ -54,17 +49,6 @@ namespace MindustryConsole
 				else Formations.NotFound("Action");
 			}
 			while (select != '0');
-		}
-
-		private static void ShowAll(General[] generals)
-		{
-
-			Console.WriteLine("┌────┬─────────────────┬─────────┬────────────┐");
-			Console.WriteLine("│ ID │ Name            │ Description │ Type │ Health │ Size │ Build Time │ Build Cost │ Mod │ Weight │");
-			Console.WriteLine("├────┼─────────────────┼─────────┼────────────┤");
-			foreach (General gen in generals)
-				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 7} │ {3, 10} │ {4,2} │ {5, 15} │ {6, 7} │ {7, 10} │ {8, 10} │ {9, 10} │", gen.Id, gen.Name, gen.Type, gen.Weight);
-			Console.WriteLine("└────┴─────────────────┴─────────┴────────────┘");
 		}
 	}
 }

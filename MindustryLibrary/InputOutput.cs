@@ -8,6 +8,7 @@ namespace MindustryLibrary
 {
 	public class InputOutput
 	{
+		//===== WORKS WITH DATABASE =====//
 		public static InputOutput[] Load()
 		{
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
@@ -19,7 +20,7 @@ namespace MindustryLibrary
 		{
 			CalculateWeight();
 
-			if (inputsOutputs.Where(io => io.Id == Id).Count() != 0)
+			if (InputsOutputs.Where(io => io.Id == Id).Count() != 0)
 			{
 				Update();
 				return;
@@ -30,21 +31,18 @@ namespace MindustryLibrary
 				cnn.Execute($"INSERT INTO InputsOutputs VALUES(@Id, @GeneralId, @Input, @Output, @ProductionTime, @Weight);", this);
 			}
 
-			inputsOutputs = Load();
 		}
 		public void Update()
 		{
-			if (Input != inputsOutputs.Where(io => io.Id == Id).ToArray()[0].Input)
+			if (Input != InputsOutputs.Where(io => io.Id == Id).ToArray()[0].Input)
 				CalculateWeight();
-			else if (ProductionTime != inputsOutputs.Where(io => io.Id == Id).ToArray()[0].ProductionTime)
+			else if (ProductionTime != InputsOutputs.Where(io => io.Id == Id).ToArray()[0].ProductionTime)
 				CalculateWeight();
 
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
 			{
 				cnn.Execute($"UPDATE InputsOutputs SET generalId = @GeneralId, input = @Input, output = @Output, productionTime = @ProductionTime, weight = @Weight WHERE id = @Id;", this);
 			}
-
-			inputsOutputs = Load();
 		}
 		public void Delete(bool generalDeleted = false)
 		{
@@ -52,8 +50,8 @@ namespace MindustryLibrary
 			{
 				string weight = CalculateWeight().ToString();
 
-				for (int i = 0; i < Material.materials.Length; i++)
-					if (Material.materials[i].Weight == weight)
+				for (int i = 0; i < Material.Count; i++)
+					if (Material.Materials[i].Weight == weight)
 						Material.Reset();
 			}
 
@@ -61,75 +59,9 @@ namespace MindustryLibrary
 			{
 				cnn.Execute($"DELETE FROM InputsOutputs WHERE id = @Id;", this);
 			}
-
-			inputsOutputs = Load();
 		}
 
-		private double CalculateWeight()
-		{
-			double inputWeight = 0;
-			double baseWeight = 0;
-			double totalWeight = 0;
-
-			//If owner have not a weight
-			if (General.generals.Where(gen => gen.Id == GeneralId).ToArray()[0].Weight == null)
-				return 0;
-			else
-				baseWeight = Convert.ToDouble(General.generals.Where(gen => gen.Id == GeneralId).ToArray()[0].Weight);
-
-			if (Input != null)
-			{
-				string[] input = Input.Split(';'); //Get items
-
-				for (int i = 0; i < Material.materials.Length; i++)
-				{
-					//Current material not available
-					if (input[i] != "" && Material.materials[i].Weight == null)
-					{
-						Weight = null;
-						return 0;
-					}
-
-					//Set input weight
-					if (input[i] != "")
-						inputWeight += Convert.ToDouble(input[i]) / Convert.ToDouble(ProductionTime) * Convert.ToDouble(Material.materials[i].Weight);
-				}
-			} //Input not null
-
-			if (Output != null)
-			{
-				string[] output = Output.Split(';'); //Get items
-
-				for (int i = 0; i < Material.materials.Length; i++)
-				{
-					// If output is able
-					if (output[i] != "")
-					{	
-						double multiplier = 1 / (Convert.ToDouble(output[i]) / Convert.ToDouble(ProductionTime));
-
-						inputWeight *= multiplier;
-						baseWeight *= multiplier;
-
-						totalWeight = Math.Round((inputWeight + baseWeight) * 100) / 100;
-
-						Weight = (Math.Round(inputWeight * 100) / 100).ToString(); //Set weight
-						Material.CheckWeight(i, totalWeight); //Check weight
-						return totalWeight;
-					}
-				}
-			} //Output not null
-
-			return 0;
-		}
-		public static void AllRefresh(string id, bool save = true)
-		{
-			for (int i = 0; i < inputsOutputs.Length; i++)
-				if (inputsOutputs[i].GeneralId == id && save)
-					inputsOutputs[i].Save();
-				else if(inputsOutputs[i].GeneralId == id && !save)
-					inputsOutputs[i].Delete(true);
-		}
-
+		//===== DATABASE'S VARIABLES =====//
 		public string Id { get; set; }
 		public string GeneralId { get; set; }
 		public string Input { get; set; }
@@ -137,8 +69,98 @@ namespace MindustryLibrary
 		public string ProductionTime { get; set; }
 		public string Weight { get; set; }
 
-		public static InputOutput[] inputsOutputs = Load();
+		//===== LOCAL VARIABLES =====//
+		public Item[] Inputs
+		{
+			get
+			{
+				if (Input == null) return null;
+				string[] items = Input.Split(';');
+				Item[] input = new Item[items.Length];
 
-		public static string NextId { get => inputsOutputs.Length == 0 ? "1" : (Convert.ToInt32(inputsOutputs[inputsOutputs.Length - 1].Id) + 1).ToString(); }
+				for (int i = 0; i < input.Length; i++)
+				{
+					input[i].Id = items[i].Split(' ').First();
+					input[i].Amount = Convert.ToDouble(items[i].Split(' ').Last());
+				}
+
+				return input;
+			}
+		}
+		public Item[] Outputs
+		{
+			get
+			{
+				if (Output == null) return null;
+				string[] items = Output.Split(';');
+				Item[] output = new Item[items.Length];
+
+				for (int i = 0; i < output.Length; i++)
+				{
+					output[i].Id = items[i].Split(' ').First();
+					output[i].Amount = Convert.ToDouble(items[i].Split(' ').Last());
+				}
+
+				return output;
+			}
+		}
+
+		public double GetInput(string id) => Material.GetItem(Input, id);
+		public double GetOutput(string id) => Material.GetItem(Output, id);
+		private double CalculateWeight()
+		{
+			double inputWeight = 0;
+			double baseWeight;
+			double totalWeight;
+
+			//If owner have not a weight
+			if (General.GetGeneral(GeneralId).Weight == null) return 0;
+			else baseWeight = Convert.ToDouble(General.GetGeneral(GeneralId).Weight);
+
+			if (Input != null)
+			{
+				string[] input = Input.Split(';'); //Get items
+
+				for (int i = 0; i < input.Length; i++)
+				{
+					double materialWeight = Convert.ToDouble(Material.GetMaterial(input[i].Split(' ').First()).Weight); //Get id of material
+					double amount = Convert.ToDouble(input[i].Split(' ').Last()); //Get amount of material
+
+					inputWeight += amount / Convert.ToDouble(ProductionTime) * materialWeight; //Get weight of input
+				}
+			} //Input not null
+
+			if (Output != null)
+			{
+				double amount = Convert.ToDouble(Output.Split(' ').Last());
+
+				double multiplier = 1 / (amount / Convert.ToDouble(ProductionTime));
+
+				inputWeight *= multiplier;
+				baseWeight *= multiplier;
+
+				totalWeight = Math.Round((inputWeight + baseWeight) * 100) / 100;
+
+				Weight = (Math.Round(inputWeight * 100) / 100).ToString(); //Set weight
+				Material.CheckWeight(Output.Split(' ').First(), totalWeight); //Check weight
+				return totalWeight;
+
+			} //Output not null
+
+			return 0;
+		}
+
+		public static void AllRefresh(string id, bool save = true)
+		{
+			for (int i = 0; i < InputsOutputs.Length; i++)
+				if (InputsOutputs[i].GeneralId == id && save)
+					InputsOutputs[i].Save();
+				else if(InputsOutputs[i].GeneralId == id && !save)
+					InputsOutputs[i].Delete(true);
+		}
+		public static InputOutput GetInputOutput(string id) => InputsOutputs.First(io => io.Id == id);
+		public static InputOutput[] GetGeneral(string generalId) => InputsOutputs.Where(io => io.GeneralId == generalId).ToArray();
+		public static InputOutput[] InputsOutputs => Load();
+		public static string NextId => (Convert.ToInt32(InputsOutputs.Max(io => Convert.ToInt32(io.Id))) + 1).ToString();
 	}
 }

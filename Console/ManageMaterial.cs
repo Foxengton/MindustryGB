@@ -1,9 +1,6 @@
 ﻿using MindustryLibrary;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MindustryConsole
 {
@@ -16,123 +13,113 @@ namespace MindustryConsole
 
 			do
 			{
-				Console.WriteLine("╔═════╡ MENU ╞═════╗");
-				Console.WriteLine("╟─┐ ┌──────────────╢");
-				Console.WriteLine("║0├─┤ Exit         ║");
-				Console.WriteLine("║1├─┤ Insert       ║");
-				Console.WriteLine("║2├─┤ Reset        ║");
-				Console.WriteLine("╟─┘ └──────────────╢");
-				Console.WriteLine("╚══════════════════╝");
-				ShowAll(Material.materials, false, offset);
-				Console.Write("> ");
+				Console.WriteLine("╔═╤═╤═╡ MATERIAL MENU ╞═════╗");
+				Console.WriteLine("║0├─┤ Exit                  ║");
+				Console.WriteLine("║1├─┤ Insert                ║");
+				Console.WriteLine("║2├─┤ Reset                 ║");
+				Console.WriteLine("╚═╧═╧═══════════════════════╝");
+				ShowAll(offset);
 
+				Console.Write("> ");
 				select = Formations.GetInt(Console.ReadLine());
 				Console.Clear();
 
-				if (select >= offset && select < Material.materials.Length + offset)
-					Update(Material.materials[select - offset]);
-				else if (select == 2)
-					Material.Reset();
-				else if (select > 0)
-					Update(new Material { Id = Material.NextId });
-				else if (select != 0) Formations.NotFound("Action");
+				if (select == 0) return;
+				else if (select == 2) Material.Reset();
+				else if (select >= offset && select < Material.Count + offset) Select(Material.Materials[select - offset]);
+				else if (select > 0) Select(new Material { Id = Material.NextId });
+				else Formations.NotFound("Action");
 			}
-			while (select != 0);
+			while (true);
 		}
 
-		public static Material Select(bool onlyAvailable = false)
-		{
-			int offset = 1;
-			int select;
-
-			Console.WriteLine("╔═════╡ SELECT ╞═════╗");
-			Console.WriteLine("╟─┐ ┌────────────────╢");
-			Console.WriteLine("║0├─┤ Exit           ║");
-			Console.WriteLine("╟─┘ └────────────────╢");
-			Console.WriteLine("╚════════════════════╝");
-			ShowAll(Material.materials, onlyAvailable, offset);
-			Console.Write("> ");
-			select = Formations.GetInt(Console.ReadLine());
-			Console.Clear();
-
-			if (select >= offset) return Material.materials[select - offset];
-
-			return null;
-		}
-
-		private static void Update(Material material)
+		private static void Select(Material material)
 		{
 			char select;
+
 			do
 			{
-				Console.Clear();
-				Console.WriteLine("═════════╡ MATERIAL ╞═════════");
-				Console.WriteLine("ID: {0}", material.Id);
-				Console.WriteLine("[1] Name: {0}", material.Name);
-				Console.WriteLine("[2] Type: {0}", material.Type);
-				Console.WriteLine("[3] Mod: {0}", material.Mod);
-				Console.WriteLine("Weight: {0}", material.Weight);
-				Console.WriteLine("[4] Color: {0}", material.Color);
-				Console.WriteLine("[9] Save");
-				Console.WriteLine("[0] Exit");
+				Console.WriteLine("╔═╤═╤═══╡ {0}. {1} ╞════════", material.Id, material.Name.ToUpper());
+				Console.WriteLine("║0├─┤ Exit");
+				Console.WriteLine("║1├─┤ Change name");
+				Console.WriteLine("║2├─┤ Type: {0}", material.Type);
+				Console.WriteLine("║3├─┤ Mod: {0}", material.Mod);
+				Console.WriteLine("║4├─┤ Color: {0}", material.Color);
+				Console.WriteLine("║9├─┤ Save");
+				Console.WriteLine("╚═╧═╧═════════════════{0}", "═".PadRight(material.Id.Length + material.Name.Length, '═'));
 
 				Console.Write("> ");
 				select = Console.ReadKey().KeyChar;
+				Console.Clear();
 
-				switch (select)
-				{
-					case '0': break;
-					case '1': material.Name = Formations.SetValue("Name", "string"); break;
-					case '2': material.Type = Formations.SetValue("Type", "string"); break;
-					case '3': material.Mod = Formations.SetValue("Mod", "string"); break;
-					case '4': material.Color = Formations.SetValue("color", "string"); break;
-					case '9': material.Save(); break;
-					default: Formations.NotFound("Action"); break;
-				}
+				if (select == '0') return;
+				else if (select == '1') material.Name = Formations.SetValue("Name", "string");
+				else if (select == '2') material.Type = Formations.SetValue("Type", "string");
+				else if (select == '3') material.Mod = Formations.SetValue("Mod", "string");
+				else if (select == '4') material.Color = Formations.SetValue("color", "string");
+				else if (select == '9') { material.Save(); return; }
+				else Formations.NotFound("Action");
 			}
-			while (select != '0');
+			while (true);
 		}
 
 		public static string SetItems(bool OnlyAvailable = true, bool onlyOne = false)
 		{
 			int offset = 3;
+			string[] input;
+			double amount;
 			int select;
-			string[] items = new string[Material.materials.Length];
+			string items = string.Empty;
+			Material[] materials;
+
+			if (OnlyAvailable) materials = Material.GetAvailable();
+			else materials = Material.Materials;
 
 			do
 			{
-				Console.WriteLine("╔═════╡ MENU ╞═════╗");
-				Console.WriteLine("╟─┐ ┌──────────────╢");
-				Console.WriteLine("║0├─┤ Cancel       ║");
-				Console.WriteLine("║1├─┤ Set Null     ║");
-				Console.WriteLine("║2├─┤ Done         ║");
-				Console.WriteLine("╟─┘ └──────────────╢");
-				Console.WriteLine("╚══════════════════╝");
-				Console.WriteLine("Result: {0};", NormalizateItems(items));
+				amount = 0;
 
-				ShowAll(Material.materials, OnlyAvailable, offset); //Show all items
+				Console.WriteLine("╔═╤═╤═╡ SET ITEMS ╞═════╗");
+				Console.WriteLine("║0├─┤ Cancel            ║");
+				Console.WriteLine("║1├─┤ Set Null          ║");
+				Console.WriteLine("║2├─┤ Done              ║");
+				Console.WriteLine("╠═╧═╧═══════════════════╝");
+				Console.WriteLine("║Result: {0}", NormalizateItems(items)); //show result
+				Console.WriteLine("╚═══════{0}", "═".PadRight(items.Length, '═'));
+				ShowAll(offset, materials); //Show items
+
 				Console.Write("> ");
-				select = Formations.GetInt(Console.ReadLine());
+				input = Console.ReadLine().Split(' ');
 				Console.Clear();
+
+				select = Formations.GetInt(input.First());
+				amount = Formations.GetDouble(input.Last());
 
 				if (select == 0) return ""; //Cancel
 				else if (select == 1) return null; //Set Null
-				else if (select == 2) return string.Join(";", items); //Done
-				else if (select >= offset && select < Material.materials.Length + offset)
+				else if (select == 2) return items == string.Empty ? null : items; //Done
+				else if (select >= offset && select < materials.Length + offset)
 				{
 					bool repeat; //If result have error
-
 					do
 					{
 						repeat = false; //No repeat do_while
 						select -= offset; //delete offset
 
-						Console.WriteLine("══════╡ ENTER {0} ╞══════", Material.materials[select].Name.ToUpper());
-						Console.Write("> ");
-						double amount = Formations.GetDouble(Console.ReadLine()); //Get amount of items
+						if (amount == 0)
+						{
+							Console.WriteLine("══════╡ ENTER {0} ╞══════", materials[select].Name.ToUpper());
+							Console.Write("> ");
+							amount = Formations.GetDouble(Console.ReadLine()); //Get amount of items
+						}
+						
 						Console.Clear();
 
-						if (amount > 0) items[select] = amount.ToString();
+						if (amount > 0)
+						{
+							if (items != string.Empty) items += ";";
+							items += materials[select].Id + " " + amount.ToString();
+						}
 						else if (amount == 0) break;
 						else
 						{
@@ -142,61 +129,73 @@ namespace MindustryConsole
 					}
 					while (repeat);
 				} //Select item
-				else Formations.NotCorrect("Amount"); //Error
+				else Formations.NotCorrect("Action"); //Error
+
+				if (onlyOne && items != string.Empty) return items;
 			}
 			while (true);
 		}
 
-		public static int GetIndex()
+		public static int GetIndex(Material[] materials)
 		{
 			int offset = 1;
 			int select;
 
 			do
 			{
-				Console.WriteLine("╔═════╡ GET INDEX ╞═════╗");
-				Console.WriteLine("╟─┐ ┌───────────────────╢");
+				Console.WriteLine("╔═╤═╤═╡ GET INDEX ╞═════╗");
 				Console.WriteLine("║0├─┤ Cancel            ║");
-				Console.WriteLine("╟─┘ └───────────────────╢");
-				Console.WriteLine("╚═══════════════════════╝");
-				ShowAll(Material.materials, true, offset); //Show all items
+				Console.WriteLine("╚═╧═╧═══════════════════╝");
+				ShowAll(offset, materials); //Show all items
+
 				Console.Write("> ");
 				select = Formations.GetInt(Console.ReadLine());
 				Console.Clear();
 
 				if (select == 0) return -1; //Cancel
-				else if (select >= offset && select < Material.materials.Length + offset) return select - offset;
+				else if (select >= offset && select < materials.Length + offset) return select - offset;
 				else Formations.NotCorrect("Amount"); //Error
 			}
 			while (true);
 		}
 
-		public static string NormalizateItems(string[] items)
+		public static string NormalizateItems(string item)
 		{
 			string result = string.Empty;
 
-			for (int i = 0; i < Material.materials.Length; i++)
-				if (items[i] != "" && items[i] != null) result += $"{items[i]} {Material.materials[i].Name} ";
+			if (item != null && item != "")
+			{
+				string[] items = item.Split(';');
+
+				for (int i = 0; i < items.Length; i++)
+				{
+					if (items[i] == "") continue;
+
+					if (result != string.Empty) result += ", ";
+					result += $"{items[i].Split(' ').Last()} {Material.GetMaterial(items[i].Split(' ').First()).Name}";
+				}
+			}
 
 			return result;
 		}
 
-		private static void ShowAll(Material[] materials, bool onlyAvailable = false, int offset = 0)
+		private static void ShowAll(int offset = 0, Material[] materials = null)
 		{
-			Console.WriteLine("┌────┬──────────────────────┬─────────┬────────────┐");
-			Console.WriteLine("│ ID │ Name                 │ Type    │ Weight     │");
-			Console.WriteLine("├────┼──────────────────────┼─────────┼────────────┤");
+			if (materials == null) materials = Material.Materials;
+
+			Console.WriteLine("┌────┬──────────────────────┬─────────┬────────────┬────────────┬─────────┐");
+			Console.WriteLine("│ ID │ Name                 │ Type    │ Mod        │ Weight     │ Color   │");
+			Console.WriteLine("├────┼──────────────────────┼─────────┼────────────┼────────────┼─────────┤");
 
 			for (int i = 0; i < materials.Length; i++)
 			{
 				Material mat = materials[i];
+				int id = i + offset;
+				string name = mat.Name.PadRight(20, ' ');
 
-				if (onlyAvailable == true && mat.Weight != null)
-					Console.WriteLine("│ {0,2} │ {1, 20} │ {2, 7} │ {3, 10} │", i + offset, mat.Name.PadRight(20, ' '), mat.Type, mat.Weight);
-				else if (onlyAvailable == false)
-					Console.WriteLine("│ {0,2} │ {1, 20} │ {2, 7} │ {3, 10} │", i + offset, mat.Name.PadRight(20, ' '), mat.Type, mat.Weight);
+				Console.WriteLine("│ {0,2} │ {1, 20} │ {2, 7} │ {3, 10} │ {4, 10} │ {5, 7} │", id, name, mat.Type, mat.Mod, mat.Weight, mat.Color);
 			}
-			Console.WriteLine("└────┴──────────────────────┴─────────┴────────────┘");
+			Console.WriteLine("└────┴──────────────────────┴─────────┴────────────┴────────────┴─────────┘");
 		}
 	}
 }
