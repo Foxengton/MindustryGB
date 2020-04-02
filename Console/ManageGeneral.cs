@@ -14,7 +14,7 @@ namespace MindustryConsole
 				Console.WriteLine("ID: {0}", general.Id);
 				Console.WriteLine("[1] Name: {0}", general.Name);
 				Console.WriteLine("[2] Type: {0}", general.Type);
-				Console.WriteLine("[3] Description: {0}", general.Description == null ? "null" : general.Description.Substring(0, 50));
+				Console.WriteLine("[3] Description: {0}", general.Description == null ? "null" : general.Description);
 				Console.WriteLine("[4] Health: {0}", general.Health);
 				Console.WriteLine("[5] Size: {0}", general.Size);
 				Console.WriteLine("[6] Build Time: {0}", general.BuildTime);

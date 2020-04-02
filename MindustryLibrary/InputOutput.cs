@@ -104,6 +104,40 @@ namespace MindustryLibrary
 				return output;
 			}
 		}
+		public Item[] InputsPerSecond
+		{
+			get
+			{
+				if (Input == null) return null;
+				string[] items = Input.Split(';');
+				Item[] input = new Item[items.Length];
+
+				for (int i = 0; i < input.Length; i++)
+				{
+					input[i].Id = items[i].Split(' ').First();
+					input[i].Amount = Convert.ToDouble(items[i].Split(' ').Last()) / Convert.ToDouble(ProductionTime);
+				}
+
+				return input;
+			}
+		}
+		public Item[] OutputsPerSecond
+		{
+			get
+			{
+				if (Output == null) return null;
+				string[] items = Output.Split(';');
+				Item[] output = new Item[items.Length];
+
+				for (int i = 0; i < output.Length; i++)
+				{
+					output[i].Id = items[i].Split(' ').First();
+					output[i].Amount = Convert.ToDouble(items[i].Split(' ').Last()) / Convert.ToDouble(ProductionTime);
+				}
+
+				return output;
+			}
+		}
 
 		public double GetInput(string id) => Material.GetItem(Input, id);
 		public double GetOutput(string id) => Material.GetItem(Output, id);

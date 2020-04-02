@@ -81,7 +81,11 @@ namespace MindustryLibrary
 		public static void CheckWeight(string id, double weight)
 		{
 			if (GetMaterial(id).Weight == null || Convert.ToDouble(GetMaterial(id).Weight) > weight)
-				GetMaterial(id).Update(false);
+			{
+				Material material = GetMaterial(id);
+				material.Weight = weight.ToString();
+				material.Update(false);
+			}
 		}
 		public static Material GetMaterial(string id) => Materials.First(mat => mat.Id == id);
 		public static Material[] GetAvailable() => Materials.Where(mat => mat.Weight != null).ToArray();
