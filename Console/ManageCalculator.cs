@@ -23,244 +23,194 @@ namespace MindustryConsole
 				Console.Clear();
 
 				if (select == 0) return;
-				else if (select == 1)
-				{
-					string value = ManageMaterial.SetItems(true);
-
-					if (value != "" && value != null)
-					{
-						string item = value.Split(' ').First();
-						double amount = Convert.ToDouble(value.Split(' ').Last());
-
-						Cell cell = new Cell
-						{
-							outputId = item,
-							outputAmount = amount
-						};
-
-						FindItem(cell, true);
-					}
-				}
-				else if (select == 2) CheckShematic();
+				else if (select == 1) CreateSchematic();
+				else if (select == 2) CheckSchematic();
 				else Formations.NotFound("Action");
 			}
 			while (true);
 		}
 
-		private static Cell FindItem(Cell cell, bool head = false)
+		private static void CreateSchematic() //TODO доделать
 		{
-			//Search IO's output, which have target item as output
-			for (int i = 0; i < InputOutput.InputsOutputs.Length; i++)
+			Item targetItem = ManageMaterial.SetItems(true, true).First();
+			List<Summary> summaries = new List<Summary> { new Summary
 			{
-				InputOutput inputOutput = InputOutput.InputsOutputs[i];
-				double outputItem = inputOutput.GetOutput(cell.outputId);
+				Id = targetItem.Id,
+				Outcome = targetItem.Amount,
+				Name = Material.GetMaterial(targetItem.Id).Name,
+				//Blocked = true TODO
+			}};
+			List<Factory> factories = new List<Factory>();
 
-				if (outputItem != 0)
+			bool repeat;
+			do
+			{
+				repeat = false;
+
+				for (int s = 0; s < summaries.Count; s++)
 				{
-					General general = General.GetGeneral(inputOutput.GeneralId); //Owner IO
-					double productionTime = Convert.ToDouble(inputOutput.ProductionTime); //IO's production time
+					Summary summary = summaries[s];
+					double ratio = summary.Income - summary.Outcome;
 
-					cell.mainAmount = Math.Ceiling(cell.outputAmount / (outputItem / productionTime) * 100) / 100; //Amount of factory needed for schematic
-					cell.ece = Math.Round(cell.mainAmount / Math.Ceiling(cell.mainAmount) * 10000) / 100; //Energy conversion efficiency
-					double max = Math.Round(Math.Ceiling(cell.mainAmount) * (outputItem / productionTime) * 100) / 100;
+					if (summary.Blocked == true) continue;
 
-					string input = string.Empty;
-					string main = Math.Ceiling(cell.mainAmount) + " " + general.Name;
-					string output = (Math.Ceiling(cell.outputAmount * 100) / 100) + " " + Material.GetMaterial(cell.outputId).Name;
-
-					if (inputOutput.Input != null)
+					if (ratio < 0)
 					{
-						cell.inputs = new List<Cell>();
+						repeat = true;
 
-						string[] items = inputOutput.Input.Split(';');
-
-						for (int x = 0; x < items.Length; x++)
+						//===== GENERAL BLOCK =====//
+						int generalIndex = 0;
+						General[] generals = General.Generals.Where(gen => InputOutput.InputsOutputs.Count(io => io.Outputs != null && io.GeneralId == gen.Id && io.Outputs.Count(it => it.Id == summary.Id) != 0) != 0).ToArray();
+						if (generals.Length == 0) generalIndex = -1;
+						else if (generals.Length > 1)
 						{
-							cell.inputs.Add(new Cell
+							int offset = 2;
+							int select;
+							do
 							{
-								outputId = items[x].Split(' ').First(),
-								outputAmount = Convert.ToDouble(items[x].Split(' ').Last()) / productionTime * cell.mainAmount
-							});
+								Console.WriteLine("╔═╤═╤═╡ SELECT FACTORY ({0}) ╞═════", summary.Name.ToUpper());
+								Console.WriteLine("║0├─┤ Exit");
+								Console.WriteLine("║1├─┤ Conveyor");
+								for (int gen = 0; gen < generals.Length; gen++)
+									Console.WriteLine("║{0}├─┤ {1}", gen + offset, generals[gen].ToString());
+								Console.WriteLine("╚═╧═╧════════════════════════");
+								Console.Write("> ");
+								select = Formations.GetInt(Console.ReadLine());
+								Console.Clear();
 
-							input += cell.inputs[x].outputId + " " + (Math.Ceiling(cell.inputs[x].outputAmount * 100) / 100) + ";";
-
-							if (cell.inputs[x].outputId == "20")
-							{
-								cell.power += cell.inputs[x].outputAmount;
+								if (select == 0) return;
+								else if (select == 1)
+								{
+									generalIndex = -1;
+									break;
+								}
+								else if (select >= offset && select <= generals.Length + offset)
+								{
+									generalIndex = select - offset;
+									break;
+								}
+								else Formations.NotFound("Action");
 							}
-							else
-							{
-								cell.inputs[x] = FindItem(cell.inputs[x]);
-								cell.power += cell.inputs[x].power;
-							}
+							while (true);
 						}
-					}
 
-					if (input != string.Empty) Console.Write("{0} => ", ManageMaterial.NormalizateItems(input));
-					Console.WriteLine("{0} => {1}/{2} ({3}%)", main, output, max, cell.ece);
+						if (generalIndex == -1)
+						{
+							summary.Income = summary.Outcome;
+							continue;
+						}
 
-					if (head)
-					{
-						Console.WriteLine("Power: {0}", cell.power);
-						Console.WriteLine();
+						General general = generals[generalIndex];
+
+						//===== INPUT/OUTPUT BLOCK =====//
+						int inputOutputIndex = 0;
+						InputOutput[] inputOutputs = InputOutput.GetGeneral(general.Id);
+						if (inputOutputs.Length == 0) return;
+						else if (inputOutputs.Length > 1)
+						{
+
+						} //TODO: выбор inputOutput если больше одного
+						InputOutput inputOutput = inputOutputs[inputOutputIndex];
+
+						//===== FACTORY BLOCK =====//
+						Factory factory = new Factory {
+							Id = general.Id,
+							Name = general.Name,
+							Amount = Math.Ceiling(Math.Abs(ratio) / inputOutput.OutputsPerSecond.Where(ops => ops.Id == summary.Id).First().Amount),
+							Input = inputOutput.InputsPerSecond,
+							Output = inputOutput.OutputsPerSecond,
+							Ratio = 1
+						};
+
+						double amount;
+						Material material;
+						foreach (Item item in factory.Input)
+						{
+							amount = item.Amount * factory.Amount * factory.Ratio;
+							material = Material.GetMaterial(item.Id);
+
+							int index = summaries.FindIndex(x => x.Id == material.Id);
+							if (index != -1)
+								summaries[index].Outcome += amount;
+							else if (material.Type == "Power")
+								summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount, Blocked = true });
+							else
+								summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount });
+						}
+						foreach (Item item in factory.Output)
+						{
+							amount = item.Amount * factory.Amount * factory.Ratio;
+							material = Material.GetMaterial(item.Id);
+
+							int index = summaries.FindIndex(x => x.Id == material.Id);
+							if (index != -1)
+								summaries[index].Income += amount;
+							else
+								summaries.Add(new Summary { Id = material.Id, Name = material.Name, Income = amount });
+						}
+
+						factories.Add(factory);
 					}
 				}
 			}
+			while (repeat);
 
-			return cell;
+			CorrectSchematic(summaries, factories);
 		}
 
-		private static void CheckShematic()
+		private static void CheckSchematic()
 		{
 			int select = 0;
-
-			if (blockMaterials == null) blockMaterials = SetBlock();
-			if (factories == null) factories = new List<Factory>();
+			List<Factory> factories = new List<Factory>();
+			List<Summary> summaries;
+			List<string> blockMaterials = SetBlock();
 
 			do
 			{
-				List<Summary> summaries = new List<Summary>();
+				summaries = new List<Summary>();
+
 				foreach (string io in blockMaterials)
 					summaries.Add(new Summary { Id = io, Name = Material.GetMaterial(io).Name, Blocked = true});
 
 				//===== SETUP VALUES ======//
-				for (int i = 0; i < factories.Count; i++)
+				foreach(Factory factory in factories)
 				{
-					Factory factory = factories[i];
-					Material material;
-					double amount;
 					factory.Ratio = 1;
 
-					foreach (Item item in factory.Input)
-					{
-						amount = item.Amount * factory.Amount * factory.Ratio;
-						material = Material.GetMaterial(item.Id);
-
-						int index = summaries.FindIndex(x => x.Id == material.Id);
-						if (index != -1) summaries[index].Outcome += amount;
-						else summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount });
-					}
-					foreach (Item item in factory.Output)
-					{
-						amount = item.Amount * factory.Amount * factory.Ratio;
-						material = Material.GetMaterial(item.Id);
-
-						int index = summaries.FindIndex(x => x.Id == material.Id);
-						if (index != -1) summaries[index].Income += amount;
-						else summaries.Add(new Summary { Id = material.Id, Name = material.Name, Income = amount });
-					}
-				}
-
-				//===== CORRECT SCHEMATIC ======//
-				bool allCorrect;
-				do
-				{
-					allCorrect = true;
-					for (int i = 0; i < summaries.Count; i++)
-					{
-						Summary summary = summaries[i];
-
-						//If summary is blocked or correct
-						if (factories.Count < 2 || summary.Blocked || Math.Floor(summary.Income * 100000) - Math.Floor(summary.Outcome * 100000) == 0) continue;
-						allCorrect = false;
-						double result = summary.Income - summary.Outcome;
-
-						//Get factories, where summary as i/o. Get factories' HashCode and created array.
-						int[] factoryIO;
-						if (result < 0) factoryIO = factories.Where(fc => fc.Input.Where(x => x.Id == summary.Id).Count() != 0).Select(str => str.GetHashCode()).ToArray();
-						else factoryIO = factories.Where(fc => fc.Output.Where(x => x.Id == summary.Id).Count() != 0).Select(str => str.GetHashCode()).ToArray();
-
-						foreach (int hash in factoryIO)
-						{
-							Summary[] summariesIO;
-							Factory factory = factories.Find(f => f.GetHashCode() == hash); //Get factory
-
-							if (summary.Outcome == 0) summary.Outcome = summary.Income;
-
-							double ratio = summary.Income / summary.Outcome; //Set ratio
-
-							//Get summaries, where summaries as Output.
-							summariesIO = summaries.Where(sm => factory.Output.Where(fi => fi.Id == sm.Id).Count() != 0).ToArray();
-							foreach (Summary summaryIO in summariesIO)
-							{
-								Item item = factory.Output.First(fi => fi.Id == summaryIO.Id); //Get summary's item
-								double amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio; //Caolculate amount
-								summaryIO.Income -= ratio > 1 ? amount - amount / ratio : amount - amount * ratio; //Edit Income
-							}
-
-							if (factory.Name != "Water Extractor" || result < 0)
-							{
-								//Get summaries, where summaries as Input.
-								summariesIO = summaries.Where(sm => factory.Input.Where(fi => fi.Id == sm.Id).Count() != 0).ToArray();
-								foreach (Summary summaryIO in summariesIO)
-								{
-									Item item = factory.Input.First(fi => fi.Id == summaryIO.Id); //Get summary's item
-									double amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio; //Caolculate amount
-									summaryIO.Outcome -= ratio > 1 ? amount - amount / ratio : amount - amount * ratio; //Edit Outcome
-								}
-							}
-
-							//Reset ratio
-							if (factory.Ratio == 1) factory.Ratio = ratio;
-							else factory.Ratio *= ratio;
-						}
-					}
-				}
-				while (!allCorrect);
-
-				//===== SHOW FACTORIES =====//
-				foreach (Factory factory in factories)
-				{
 					double amount;
 					Material material;
-
-					Console.WriteLine("===== {0} ({1}) =====", factory.Name.ToUpper(), factory.Amount);
 					foreach (Item item in factory.Input)
 					{
-						if (factory.Name != "Water Extractor") amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
-						else amount = item.Amount * factory.Amount;
+						amount = item.Amount * factory.Amount * factory.Ratio;
 						material = Material.GetMaterial(item.Id);
-						Console.WriteLine("- {0} {1}", amount, material.Name);
+
+						int index = summaries.FindIndex(x => x.Id == material.Id);
+						if (index != -1)
+							summaries[index].Outcome += amount;
+						else if (material.Type == "Power")
+							summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount, Blocked = true });
+						else
+							summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount });
 					}
 					foreach (Item item in factory.Output)
 					{
-						amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
+						amount = item.Amount * factory.Amount * factory.Ratio;
 						material = Material.GetMaterial(item.Id);
-						Console.WriteLine("+ {0} {1}", amount, material.Name);
+
+						int index = summaries.FindIndex(x => x.Id == material.Id);
+						if (index != -1)
+							summaries[index].Income += amount;
+						else
+							summaries.Add(new Summary { Id = material.Id, Name = material.Name, Income = amount });
 					}
-					Console.WriteLine();
 				}
 
-				//===== SHOW SUMMARIES =====//
-				if (summaries.Count != 0)
-				{
-					Console.WriteLine("===== SUMMARY =====");
-					foreach (Summary summary in summaries)
-						Console.WriteLine("{0}: {1} - {2} = {3}", summary.Name, summary.Income, summary.Outcome, summary.Income - summary.Outcome);
-					Console.WriteLine();
-				}
+				CorrectSchematic(summaries, factories);
 
-				//===== SHOW RATIOS =====//
-				double averageRatio = 0;
-				Console.WriteLine("===== RATIOS =====");
-				foreach (Factory factory in factories)
-				{
-					if (factory.Ratio > 1) averageRatio += factory.Amount / factory.Ratio / factory.Amount;
-					else averageRatio += factory.Ratio;
-
-					double amount = Math.Ceiling((factory.Ratio > 1 ? factory.Amount / factory.Ratio : factory.Amount * factory.Ratio) * 100) / 100;
-					double whole = Math.Ceiling(amount);
-
-					Console.WriteLine("{0} ({1})/{2} {3}", whole, amount, factory.Amount, factory.Name.ToUpper());
-				}
-				Console.WriteLine("AVERAGE RATIO: {0}%", Math.Round(averageRatio / factories.Count * 10000) / 100);
-				Console.WriteLine();
-
-				Console.WriteLine("╔═╤═╤═╡ CHECK SHEMATIC MENU ╞═════╗");
-				Console.WriteLine("║0├─┤ Exit                        ║");
-				Console.WriteLine("║1├─┤ Add Factory                 ║");
-				Console.WriteLine("║2├─┤ Calculate                   ║");
-				Console.WriteLine("╚═╧═╧═════════════════════════════╝");
+				Console.WriteLine("╔═╤═╤═╡ CHECK SСHEMATIC MENU ╞═════╗");
+				Console.WriteLine("║0├─┤ Exit                         ║");
+				Console.WriteLine("║1├─┤ Add Factory                  ║");
+				Console.WriteLine("╚═╧═╧══════════════════════════════╝");
 				Console.Write("> ");
 				select = Formations.GetInt(Console.ReadLine());
 				Console.Clear();
@@ -269,6 +219,8 @@ namespace MindustryConsole
 				else if (select == 1)
 				{
 					string factory = ManageBuilding.SetItems();
+
+					factories.ForEach(x => x.Ratio = 1);
 
 					if (factory != null && factory != "")
 					{
@@ -285,12 +237,6 @@ namespace MindustryConsole
 							Ratio = 1
 						});
 					}
-
-					factories.ForEach(x => x.Ratio = 1);
-				}
-				else if (select == 2)
-				{
-
 				}
 				else Formations.NotFound("Action");
 			}
@@ -343,24 +289,125 @@ namespace MindustryConsole
 			while (true);
 		}
 
-		public struct Cell
+		private static void CorrectSchematic(List<Summary> summaries, List<Factory> factories)
 		{
-			public List<Cell> inputs;
-			public string mainId;
-			public double mainAmount;
-			public string outputId;
-			public double outputAmount;
-			public double ece;
-			public double power;
+			//===== CORRECT SCHEMATIC ======//
+			bool allCorrect;
+			do
+			{
+				allCorrect = true;
+				for (int i = 0; i < summaries.Count; i++)
+				{
+					Summary summary = summaries[i];
+
+					//If summary is blocked or correct
+					if (factories.Count < 2 || summary.Blocked || Math.Floor(summary.Income * 100000) - Math.Floor(summary.Outcome * 100000) == 0) continue;
+					allCorrect = false;
+					double result = summary.Income - summary.Outcome;
+
+					//Get factories, where summary as i/o. Get factories' HashCode and created array.
+					int[] factoryIO;
+					if (result < 0) factoryIO = factories.Where(fc => fc.Input.Count(x => x.Id == summary.Id) != 0).Select(str => str.GetHashCode()).ToArray();
+					else factoryIO = factories.Where(fc => fc.Output.Count(x => x.Id == summary.Id) != 0).Select(str => str.GetHashCode()).ToArray();
+
+					foreach (int hash in factoryIO)
+					{
+						Summary[] summariesIO;
+						Factory factory = factories.Find(f => f.GetHashCode() == hash); //Get factory
+
+						if (summary.Outcome == 0) summary.Outcome = summary.Income;
+
+						double ratio = summary.Income / summary.Outcome; //Set ratio
+
+						//Get summaries, where summaries as Output.
+						summariesIO = summaries.Where(sm => factory.Output.Count(fi => fi.Id == sm.Id) != 0).ToArray();
+						foreach (Summary summaryIO in summariesIO)
+						{
+							Item item = factory.Output.First(fi => fi.Id == summaryIO.Id); //Get summary's item
+							double amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio; //Caolculate amount
+							summaryIO.Income -= ratio > 1 ? amount - amount / ratio : amount - amount * ratio; //Edit Income
+						}
+
+						if (factory.Name != "Water Extractor" || result < 0)
+						{
+							//Get summaries, where summaries as Input.
+							summariesIO = summaries.Where(sm => factory.Input.Count(fi => fi.Id == sm.Id) != 0).ToArray();
+							foreach (Summary summaryIO in summariesIO)
+							{
+								Item item = factory.Input.First(fi => fi.Id == summaryIO.Id); //Get summary's item
+								double amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio; //Caolculate amount
+								summaryIO.Outcome -= ratio > 1 ? amount - amount / ratio : amount - amount * ratio; //Edit Outcome
+							}
+						}
+
+						//Reset ratio
+						if (factory.Ratio == 1) factory.Ratio = ratio;
+						else factory.Ratio *= ratio;
+					}
+				}
+			}
+			while (!allCorrect);
+
+			//===== SHOW FACTORIES =====//
+			foreach (Factory factory in factories)
+			{
+				double amount;
+				Material material;
+
+				Console.WriteLine("===== {0} ({1}) =====", factory.Name.ToUpper(), factory.Amount);
+				foreach (Item item in factory.Input)
+				{
+					if (factory.Name != "Water Extractor") amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
+					else amount = item.Amount * factory.Amount;
+					material = Material.GetMaterial(item.Id);
+					Console.WriteLine("- {0} {1}", amount, material.Name);
+				}
+				foreach (Item item in factory.Output)
+				{
+					amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
+					material = Material.GetMaterial(item.Id);
+					Console.WriteLine("+ {0} {1}", amount, material.Name);
+				}
+				Console.WriteLine();
+			}
+
+			//===== SHOW SUMMARIES =====//
+			if (summaries.Count != 0)
+			{
+				Console.WriteLine("===== SUMMARY =====");
+				foreach (Summary summary in summaries)
+					Console.WriteLine("{0}: {1} - {2} = {3}", summary.Name, summary.Income, summary.Outcome, summary.Income - summary.Outcome);
+				Console.WriteLine();
+			}
+
+			//===== SHOW RATIOS =====//
+			double averageRatio = 0;
+			Console.WriteLine("===== RATIOS =====");
+			foreach (Factory factory in factories)
+			{
+				if (factory.Ratio > 1) averageRatio += factory.Amount / factory.Ratio / factory.Amount;
+				else averageRatio += factory.Ratio;
+
+				double amount = Math.Ceiling((factory.Ratio > 1 ? factory.Amount / factory.Ratio : factory.Amount * factory.Ratio) * 100) / 100;
+				double whole = Math.Ceiling(amount);
+
+				Console.WriteLine("{0} ({1})/{2} {3}", whole, amount, factory.Amount, factory.Name.ToUpper());
+			}
+			Console.WriteLine("AVERAGE RATIO: {0}%", Math.Round(averageRatio / factories.Count * 10000) / 100);
+			Console.WriteLine();
 		}
-
-		private static List<Factory> factories;
-		private static List<string> blockMaterials;
-
 	}
 
 	public class Factory
 	{
+		public override string ToString()
+		{
+			double decimalAmount = Amount * Ratio;
+			string input = string.Join(", ", Input.Select(sel => Material.GetMaterial(sel.Id).Name + " " + decimalAmount * sel.Amount));
+			string output = string.Join(", ", Output.Select(sel => Material.GetMaterial(sel.Id).Name + " " + decimalAmount * sel.Amount));
+
+			return $"{decimalAmount}/{Amount} {Name}: {input} => {output}";
+		}
 		public string Id { get; set; }
 		public string Name { get; set; }
 		public double Amount { get; set; }
@@ -371,6 +418,11 @@ namespace MindustryConsole
 
 	public class Summary
 	{
+		public override string ToString()
+		{
+			return $"{Name}: {Income} - {Outcome} = {Income - Outcome} [{Blocked}]";
+		}
+
 		public string Id { get; set; }
 		public string Name { get; set; }
 		public double Income { get; set; }

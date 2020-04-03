@@ -1,5 +1,6 @@
 ﻿using MindustryLibrary;
 using System;
+using System.Linq;
 
 namespace MindustryConsole
 {
@@ -18,7 +19,7 @@ namespace MindustryConsole
 				Console.WriteLine("[4] Health: {0}", general.Health);
 				Console.WriteLine("[5] Size: {0}", general.Size);
 				Console.WriteLine("[6] Build Time: {0}", general.BuildTime);
-				Console.WriteLine("[7] Build Cost: {0}", general.BuildCost == null ? "null" : ManageMaterial.NormalizateItems(general.BuildCost));
+				Console.WriteLine("[7] Build Cost: {0}", general.BuildCost == null ? "null" : string.Join(", ", general.BuildCosts.Select(sel => sel.ToString())));
 				Console.WriteLine("[8] Mod: {0}", general.Mod);
 				Console.WriteLine("Weight: {0}", general.Weight);
 				Console.WriteLine("[9] Save");
@@ -37,8 +38,8 @@ namespace MindustryConsole
 				else if (select == '6') general.BuildTime = Formations.SetValue("build Time", "double");
 				else if (select == '7')
 				{
-					string buildCost = ManageMaterial.SetItems();
-					if (buildCost != "") general.BuildCost = buildCost;
+					Item[] buildCost = ManageMaterial.SetItems();
+					if (buildCost != null) general.BuildCost = string.Join(";", buildCost.Select(inp => inp.Id + " " + inp.Amount));
 				}
 				else if (select == '8') general.Mod = Formations.SetValue("mod", "string");
 				else if (select == '9')

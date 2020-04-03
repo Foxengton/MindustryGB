@@ -3,6 +3,7 @@ using Dapper;
 using System.Data.SQLite;
 using System.Data;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace MindustryLibrary
 {
@@ -18,28 +19,32 @@ namespace MindustryLibrary
 		}
 		public void Save()
 		{
-			CalculateWeight();
-
-			if (Generals.Where(gen => gen.Id == Id).Count() != 0)
+			if (Generals.Count(gen => gen.Id == Id) != 0)
 			{
 				Update();
 				return;
 			}
 
+			CalculateWeight();
+
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
 			{
 				cnn.Execute($"INSERT INTO Generals VALUES(@Id, @Name, @Description, @Type, @Health, @Size, @BuildTime, @BuildCost, @Mod, @Weight);", this);
 			}
+
+			InputOutput.GetGeneral(Id).ToList().ForEach(fe => fe.Update());
 		}
 		public void Update()
 		{
-			if (BuildCost != Generals.Where(gen => gen.Id == Id).ToArray()[0].BuildCost)
-				CalculateWeight();
+			CalculateWeight();
+			if (Weight == null) return;
 
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
 			{
 				cnn.Execute($"UPDATE Generals SET name = @Name, description = @Description, type = @Type, health = @Health, size = @Size, buildTime = @BuildTime, buildCost = @BuildCost, mod = @Mod, weight = @Weight WHERE id = @Id;", this);
 			}
+
+			InputOutput.GetGeneral(Id).ToList().ForEach(fe => fe.Update());
 		}
 		public void Delete()
 		{
@@ -48,10 +53,26 @@ namespace MindustryLibrary
 				cnn.Execute($"DELETE FROM Generals WHERE id = @Id;", this);
 			}
 
-			InputOutput.AllRefresh(Id, false);
+			InputOutput.InputsOutputs.Where(io => io.GeneralId == Id).ToList().ForEach(fe => fe.Delete());
 		}
 
-		//===== VARIABLE =====//
+		public void Reset()
+		{
+			Weight = null;
+
+			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
+			{
+				cnn.Execute($"UPDATE Generals SET name = @Name, description = @Description, type = @Type, health = @Health, size = @Size, buildTime = @BuildTime, buildCost = @BuildCost, mod = @Mod, weight = @Weight WHERE id = @Id;", this);
+			}
+		}
+
+		public static void ResetAll()
+		{
+			foreach (General general in Generals)
+				general.Reset();
+		}
+
+		//===== DATABASE'S VARIABLES =====//
 		public string Id { get; set; }
 		public string Name { get; set; }
 		public string Description { get; set; }
@@ -63,51 +84,66 @@ namespace MindustryLibrary
 		public string Mod { get; set; }
 		public string Weight { get; set; }
 
-		private void CalculateWeight()
+		//===== LOCAL VARIABLES =====//
+		public Item[] BuildCosts
 		{
-			Weight = null;
-			string[] buildCost = BuildCost.Split(';');
-			double weight = 0;
-
-			for (int i = 0; i < buildCost.Length; i++)
+			get
 			{
-				string materialWeight = Material.GetMaterial(buildCost[i].Split(' ').First()).Weight; //Get id of material
-				double amount = Convert.ToDouble(buildCost[i].Split(' ').Last()); //Get amount of material
+				if (BuildCost == null) return null;
+				string[] items = BuildCost.Split(';');
+				List<Item> buildCost = new List<Item>();
 
-				if (materialWeight == null) return;
+				foreach (string item in items)
+				{
+					buildCost.Add(new Item {
+						Id = item.Split(' ').First(),
+						Amount = Convert.ToDouble(item.Split(' ').Last())
+					});
+				}
 
-				weight += amount * Convert.ToDouble(materialWeight);
-			} //Calculate weight
-
-			Weight = (Math.Round(weight * 100) / 100).ToString();
-
-			InputOutput.AllRefresh(Id);
+				return buildCost.ToArray();
+			}
 		}
 
+		public override string ToString()
+		{
+			return $"{Id}. {Name} {Weight} [{string.Join(", ", BuildCosts.Select(bc => bc.ToString()))}]";
+		}
+
+		private double CalculateWeight()
+		{
+			Weight = null;
+			double weight = 0;
+
+			for (int i = 0; i < BuildCosts.Length; i++)
+			{
+				string materialWeight = Material.GetMaterial(BuildCosts[i].Id).Weight; //Get id of material
+
+				if (materialWeight == null) return weight;
+
+				weight += BuildCosts[i].Amount * Convert.ToDouble(materialWeight);
+			} //Calculate weight
+
+			weight = Math.Round(weight * 100) / 100;
+			Weight = weight.ToString();
+			return weight;
+		}
 
 		public static General GetGeneral(string id) => Generals.First(gen => gen.Id == id);
-		public static void Refresh(string materialId = "-1")
+		public static void Refresh(string materialId = "")
 		{
-			if (materialId == "-1")
-			{
-				for (int i = 0; i < Generals.Length; i++)
-					Generals[i].Save();
-			}
+			if (materialId == "") for (int i = 0; i < Generals.Length; i++) Generals[i].Save();
 			else
 			{
-				for (int i = 0; i < Generals.Length; i++)
-				{
-					string[] items = Generals[i].BuildCost.Split(';');
+				List<General> generals = Generals.Where(gen => gen.BuildCosts.Count(bc => bc.Id == materialId) != 0).ToList();
 
-					for (int x = 0; x < items.Length; x++)
-						if (items[x].Split(' ').First() == materialId)
-							Generals[i].Save();
-				}
+				foreach (General general in generals)
+					general.Update();
 			}
 		}
 
 		public static General[] Generals => Load();
 		public static int Count => Generals.Count();
-		public static string NextId => (Convert.ToInt32(Generals.Max(gen => Convert.ToInt32(gen.Id))) + 1).ToString();
+		public static string NextId => (Generals.Max(gen => Convert.ToInt32(gen.Id)) + 1).ToString();
 	}
 }

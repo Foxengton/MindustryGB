@@ -58,7 +58,7 @@ namespace MindustryConsole
 				//Input/Output
 				Console.WriteLine("║5 0├─┤ Add Input/Output  ║");
 				for (int i = 0; i < inputsOutputs.Length; i++)
-					Console.WriteLine("║5 {0}├─┤ Edit {1}/{2} ║", i + 1, ManageMaterial.NormalizateItems(inputsOutputs[i].Input), ManageMaterial.NormalizateItems(inputsOutputs[i].Output));
+					Console.WriteLine("║5 {0}├─┤ Edit {1}/{2} ║", i + 1, string.Join(", ", inputsOutputs[i].Inputs.Select(it => it.ToString())), string.Join(", ", inputsOutputs[i].Outputs.Select(it => it.ToString())));
 
 				Console.WriteLine("║ 9 ├─┤ Delete            ║");
 				Console.WriteLine("╟───┘ └───────────────────╢");
@@ -195,7 +195,7 @@ namespace MindustryConsole
 			if (general.Health != null) Console.WriteLine(" Health: {0}", general.Health);
 			if (general.Size != null) Console.WriteLine(" Size: {0}", general.Size);
 			if (general.BuildTime != null) Console.WriteLine(" Build Time: {0}", general.BuildTime);
-			if (general.BuildCost != null) Console.WriteLine(" Build Cost: {0}", ManageMaterial.NormalizateItems(general.BuildCost));
+			if (general.BuildCost != null) Console.WriteLine(" Build Cost: {0}", string.Join(", ", general.BuildCosts.Select(sel => sel.ToString())));
 			if (general.Weight != null) Console.WriteLine(" Weight: {0}", general.Weight);
 
 			if (inputsOutputs.Length != 0)
@@ -208,16 +208,16 @@ namespace MindustryConsole
 					if (inputsOutputs[i].Input != null)
 					{
 						if (input == string.Empty)
-							input = ManageMaterial.NormalizateItems(inputsOutputs[i].Input);
+							input = string.Join(", ", inputsOutputs[i].Inputs.Select(sel => sel.ToString()));
 						else if (inputsOutputs[i].Input != inputsOutputs[i - 1].Input)
-							input += " / " + ManageMaterial.NormalizateItems(inputsOutputs[i].Input);
+							input += " / " + string.Join(", ", inputsOutputs[i].Inputs.Select(sel => sel.ToString()));
 					}
 					if (inputsOutputs[i].Output != null)
 					{
 						if (output == string.Empty)
-							output = ManageMaterial.NormalizateItems(inputsOutputs[i].Output);
+							output = string.Join(", ", inputsOutputs[i].Outputs.Select(sel => sel.ToString()));
 						else if (inputsOutputs[i].Output != inputsOutputs[i - 1].Output)
-							output += "/ " + ManageMaterial.NormalizateItems(inputsOutputs[i].Output);
+							output += "/ " + string.Join(", ", inputsOutputs[i].Outputs.Select(sel => sel.ToString()));
 					}
 				}
 

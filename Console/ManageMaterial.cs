@@ -1,5 +1,6 @@
 ﻿using MindustryLibrary;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MindustryConsole
@@ -25,7 +26,7 @@ namespace MindustryConsole
 				Console.Clear();
 
 				if (select == 0) return;
-				else if (select == 2) Material.Reset();
+				else if (select == 2) Material.ResetAll();
 				else if (select >= offset && select < Material.Count + offset) Select(Material.Materials[select - offset]);
 				else if (select > 0) Select(new Material { Id = Material.NextId });
 				else Formations.NotFound("Action");
@@ -45,6 +46,15 @@ namespace MindustryConsole
 				Console.WriteLine("║2├─┤ Type: {0}", material.Type);
 				Console.WriteLine("║3├─┤ Mod: {0}", material.Mod);
 				Console.WriteLine("║4├─┤ Color: {0}", material.Color);
+				
+				string ProducedIn = string.Join(", ", General.Generals.Where(gen => InputOutput.InputsOutputs.Count(io => io.Outputs != null && io.GeneralId == gen.Id && io.Outputs.Count(it => it.Id == material.Id) != 0) != 0).Select(sel => sel.Name));
+				Console.WriteLine("║ ├─┤ Produced in: {0}", ProducedIn);
+
+				string RequiredFor = string.Join(", ", General.Generals.Where(gen => InputOutput.InputsOutputs.Count(io => io.Inputs != null && io.GeneralId == gen.Id && io.Inputs.Count(it => it.Id == material.Id) != 0) != 0).Select(sel => sel.Name));
+				Console.WriteLine("║ ├─┤ Required for: {0}", RequiredFor);
+				
+				string UsedToBuild = string.Join(", ", General.Generals.Where(gen => gen.BuildCosts.Count(item => item.Id == material.Id) != 0).Select(sel => sel.Name));
+				Console.WriteLine("║ ├─┤ Used to build: {0}", UsedToBuild);
 				Console.WriteLine("║9├─┤ Save");
 				Console.WriteLine("╚═╧═╧═════════════════{0}", "═".PadRight(material.Id.Length + material.Name.Length, '═'));
 
@@ -63,13 +73,13 @@ namespace MindustryConsole
 			while (true);
 		}
 
-		public static string SetItems(bool OnlyAvailable = true, bool onlyOne = false)
+		public static Item[] SetItems(bool OnlyAvailable = true, bool onlyOne = false)
 		{
 			int offset = 3;
 			string[] input;
 			double amount;
 			int select;
-			string items = string.Empty;
+			List<Item> items = new List<Item>();
 			Material[] materials;
 
 			if (OnlyAvailable) materials = Material.GetAvailable();
@@ -77,15 +87,13 @@ namespace MindustryConsole
 
 			do
 			{
-				amount = 0;
-
 				Console.WriteLine("╔═╤═╤═╡ SET ITEMS ╞═════╗");
 				Console.WriteLine("║0├─┤ Cancel            ║");
 				Console.WriteLine("║1├─┤ Set Null          ║");
 				Console.WriteLine("║2├─┤ Done              ║");
 				Console.WriteLine("╠═╧═╧═══════════════════╝");
-				Console.WriteLine("║Result: {0}", NormalizateItems(items)); //show result
-				Console.WriteLine("╚═══════{0}", "═".PadRight(items.Length, '═'));
+				Console.WriteLine("║Result: {0}", string.Join(", ", items)); //show result
+				Console.WriteLine("╚════════════════════════");
 				ShowAll(offset, materials); //Show items
 
 				Console.Write("> ");
@@ -93,11 +101,14 @@ namespace MindustryConsole
 				Console.Clear();
 
 				select = Formations.GetInt(input.First());
-				amount = Formations.GetDouble(input.Last());
 
-				if (select == 0) return ""; //Cancel
+				if (input.Length == 2)
+					amount = Formations.GetDouble(input.Last());
+				else amount = 0;
+
+				if (select == 0) return null; //Cancel
 				else if (select == 1) return null; //Set Null
-				else if (select == 2) return items == string.Empty ? null : items; //Done
+				else if (select == 2) return items.ToArray(); //Done
 				else if (select >= offset && select < materials.Length + offset)
 				{
 					bool repeat; //If result have error
@@ -111,15 +122,10 @@ namespace MindustryConsole
 							Console.WriteLine("══════╡ ENTER {0} ╞══════", materials[select].Name.ToUpper());
 							Console.Write("> ");
 							amount = Formations.GetDouble(Console.ReadLine()); //Get amount of items
+							Console.Clear();
 						}
-						
-						Console.Clear();
 
-						if (amount > 0)
-						{
-							if (items != string.Empty) items += ";";
-							items += materials[select].Id + " " + amount.ToString();
-						}
+						if (amount > 0) items.Add(new Item { Id = materials[select].Id, Amount = amount });
 						else if (amount == 0) break;
 						else
 						{
@@ -131,52 +137,9 @@ namespace MindustryConsole
 				} //Select item
 				else Formations.NotCorrect("Action"); //Error
 
-				if (onlyOne && items != string.Empty) return items;
+				if (onlyOne && items != null) return items.ToArray();
 			}
 			while (true);
-		}
-
-		public static int GetIndex(Material[] materials)
-		{
-			int offset = 1;
-			int select;
-
-			do
-			{
-				Console.WriteLine("╔═╤═╤═╡ GET INDEX ╞═════╗");
-				Console.WriteLine("║0├─┤ Cancel            ║");
-				Console.WriteLine("╚═╧═╧═══════════════════╝");
-				ShowAll(offset, materials); //Show all items
-
-				Console.Write("> ");
-				select = Formations.GetInt(Console.ReadLine());
-				Console.Clear();
-
-				if (select == 0) return -1; //Cancel
-				else if (select >= offset && select < materials.Length + offset) return select - offset;
-				else Formations.NotCorrect("Amount"); //Error
-			}
-			while (true);
-		}
-
-		public static string NormalizateItems(string item)
-		{
-			string result = string.Empty;
-
-			if (item != null && item != "")
-			{
-				string[] items = item.Split(';');
-
-				for (int i = 0; i < items.Length; i++)
-				{
-					if (items[i] == "") continue;
-
-					if (result != string.Empty) result += ", ";
-					result += $"{items[i].Split(' ').Last()} {Material.GetMaterial(items[i].Split(' ').First()).Name}";
-				}
-			}
-
-			return result;
 		}
 
 		private static void ShowAll(int offset = 0, Material[] materials = null)

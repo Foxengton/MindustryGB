@@ -29,14 +29,14 @@ namespace MindustryLibrary
 				cnn.Execute($"INSERT INTO Materials VALUES(@Id, @Name, @Type, @Mod, @Weight, @Color);", this);
 			}
 		}
-		public void Update(bool refresh = true)
+		public void Update()
 		{
 			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
 			{
 				cnn.Execute($"UPDATE Materials SET name = @Name, type = @Type, mod = @Mod, weight = @Weight, color = @Color WHERE id = @Id;", this);
 			}
 
-			if (refresh) General.Refresh(Id);
+			if (!IsReset) General.Refresh(Id);
 		}
 		public void Delete()
 		{
@@ -45,7 +45,18 @@ namespace MindustryLibrary
 				cnn.Execute($"DELETE FROM Materials WHERE id = @Id;", this);
 			}
 
-			General.Refresh();
+			General.Refresh(Id); //TODO: Обновление Generals после удаления материала.
+		}
+
+		public void Reset()
+		{
+			if (Name != "Copper" && Name != "Lead") Weight = null;
+			else Weight = "1"; 
+
+			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
+			{
+				cnn.Execute($"UPDATE Materials SET name = @Name, type = @Type, mod = @Mod, weight = @Weight, color = @Color WHERE id = @Id;", this);
+			}
 		}
 
 		//===== VARIABLE =====//
@@ -56,27 +67,39 @@ namespace MindustryLibrary
 		public string Weight { get; set; }
 		public string Color { get; set; }
 
-
-		public static double GetItem(string item, string id)
+		public override string ToString()
 		{
-			string[] items = item.Split(';');
-
-			for (int i = 0; i < items.Length; i++)
-				if (items[i].Split(' ').First() == id)
-					return Convert.ToDouble(items[i].Split(' ').Last());
-
-			return 0;
+			return $"{Id}. {Name} {Weight}";
 		}
-		public static void Reset()
-		{
-			for (int i = 0; i < Count; i++)
-				if (Materials[i].Name != "Copper" && Materials[i].Name != "Lead")
-				{
-					Materials[i].Weight = null;
-					Materials[i].Update();
-				}
 
-			General.Refresh();
+		public static void ResetAll(string id = "")
+		{
+			if (id == "")
+			{
+				IsReset = true;
+
+				foreach (Material material in Materials)
+					material.Reset();
+
+				General.ResetAll();
+				General[] generals = General.Generals.Where(gen => gen.Weight == null).ToArray();
+				do
+				{
+					foreach (General general in generals)
+						general.Update();
+
+					generals = General.Generals.Where(gen => gen.Weight == null).ToArray();
+				}
+				while (generals.Length != 0);
+
+				IsReset = false;
+			}
+			else if (GetMaterial(id).Weight != null)
+			{
+				Material material = GetMaterial(id);
+				material.Weight = null;
+				material.Update();
+			}
 		}
 		public static void CheckWeight(string id, double weight)
 		{
@@ -84,7 +107,7 @@ namespace MindustryLibrary
 			{
 				Material material = GetMaterial(id);
 				material.Weight = weight.ToString();
-				material.Update(false);
+				material.Update();
 			}
 		}
 		public static Material GetMaterial(string id) => Materials.First(mat => mat.Id == id);
@@ -92,6 +115,8 @@ namespace MindustryLibrary
 
 		public static Material[] Materials => Load();
 		public static int Count => Materials.Count();
-		public static string NextId => (Convert.ToInt32(Materials.Max(mat => Convert.ToInt32(mat.Id))) + 1).ToString();
+		public static string NextId => (Materials.Max(mat => Convert.ToInt32(mat.Id)) + 1).ToString();
+
+		private static bool IsReset = false;
 	}
 }
