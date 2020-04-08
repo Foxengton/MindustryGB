@@ -9,7 +9,7 @@ namespace MindustryConsole
 	{
 		public static void Menu()
 		{
-			int select;
+			char select;
 
 			do
 			{
@@ -19,18 +19,18 @@ namespace MindustryConsole
 				Console.WriteLine("║2├─┤ Check Schematic        ║");
 				Console.WriteLine("╚═╧═╧════════════════════════╝");
 				Console.Write("> ");
-				select = Formations.GetInt(Console.ReadLine());
+				select = Console.ReadKey().KeyChar;
 				Console.Clear();
 
-				if (select == 0) return;
-				else if (select == 1) CreateSchematic();
-				else if (select == 2) CheckSchematic();
+				if (select == '0') return;
+				else if (select == '1') CreateSchematic();
+				else if (select == '2') CheckSchematic();
 				else Formations.NotFound("Action");
 			}
 			while (true);
 		}
 
-		private static void CreateSchematic() //TODO доделать
+		private static void CreateSchematic()
 		{
 			Item targetItem = ManageMaterial.SetItems(true, true).First();
 			List<Summary> summaries = new List<Summary> { new Summary
@@ -38,7 +38,6 @@ namespace MindustryConsole
 				Id = targetItem.Id,
 				Outcome = targetItem.Amount,
 				Name = Material.GetMaterial(targetItem.Id).Name,
-				//Blocked = true TODO
 			}};
 			List<Factory> factories = new List<Factory>();
 
@@ -52,17 +51,18 @@ namespace MindustryConsole
 					Summary summary = summaries[s];
 					double ratio = summary.Income - summary.Outcome;
 
-					if (summary.Blocked == true) continue;
+					if (summary.Blocked || summary.Conveyor) continue;
 
 					if (ratio < 0)
 					{
 						repeat = true;
 
-						//===== GENERAL BLOCK =====//
-						int generalIndex = 0;
-						General[] generals = General.Generals.Where(gen => InputOutput.InputsOutputs.Count(io => io.Outputs != null && io.GeneralId == gen.Id && io.Outputs.Count(it => it.Id == summary.Id) != 0) != 0).ToArray();
-						if (generals.Length == 0) generalIndex = -1;
-						else if (generals.Length > 1)
+						//===== INPUT/OUTPUT BLOCK =====//
+						int inputOutputsIndex = 0;
+						InputOutput[] inputOutputs = InputOutput.InputsOutputs.Where(io => io.Outputs != null && io.Outputs.Count(it => it.Id == summary.Id) != 0).ToArray();
+						
+						if (inputOutputs.Length == 0) inputOutputsIndex = -1;
+						else if (inputOutputs.Length > 0)
 						{
 							int offset = 2;
 							int select;
@@ -71,46 +71,48 @@ namespace MindustryConsole
 								Console.WriteLine("╔═╤═╤═╡ SELECT FACTORY ({0}) ╞═════", summary.Name.ToUpper());
 								Console.WriteLine("║0├─┤ Exit");
 								Console.WriteLine("║1├─┤ Conveyor");
-								for (int gen = 0; gen < generals.Length; gen++)
-									Console.WriteLine("║{0}├─┤ {1}", gen + offset, generals[gen].ToString());
+								for (int io = 0; io < inputOutputs.Length; io++)
+									Console.WriteLine("║{0}├─┤ {1}", io + offset, inputOutputs[io].ToString());
 								Console.WriteLine("╚═╧═╧════════════════════════");
 								Console.Write("> ");
-								select = Formations.GetInt(Console.ReadLine());
+								select = Formations.GetInt(Console.ReadKey().KeyChar.ToString());
 								Console.Clear();
 
 								if (select == 0) return;
 								else if (select == 1)
 								{
-									generalIndex = -1;
+									inputOutputsIndex = -1;
 									break;
 								}
-								else if (select >= offset && select <= generals.Length + offset)
+								else if (select >= offset && select <= inputOutputs.Length + offset)
 								{
-									generalIndex = select - offset;
+									inputOutputsIndex = select - offset;
 									break;
 								}
 								else Formations.NotFound("Action");
 							}
 							while (true);
 						}
-
-						if (generalIndex == -1)
+						
+						if (inputOutputsIndex == -1)
 						{
-							summary.Income = summary.Outcome;
+							double select = 0;
+
+							Console.WriteLine("═════╡ ENTER AMOUNT OF {0} ╞═════", summary.Name.ToUpper());
+							Console.Write("> ");
+							select = Formations.GetDouble(Console.ReadLine());
+							Console.Clear();
+
+							if (select <= 0) return;
+							
+							summary.Income = select;
+							summary.Conveyor = true;
+
 							continue;
 						}
 
-						General general = generals[generalIndex];
-
-						//===== INPUT/OUTPUT BLOCK =====//
-						int inputOutputIndex = 0;
-						InputOutput[] inputOutputs = InputOutput.GetGeneral(general.Id);
-						if (inputOutputs.Length == 0) return;
-						else if (inputOutputs.Length > 1)
-						{
-
-						} //TODO: выбор inputOutput если больше одного
-						InputOutput inputOutput = inputOutputs[inputOutputIndex];
+						InputOutput inputOutput = inputOutputs[inputOutputsIndex];
+						General general = inputOutput.GetGeneral;
 
 						//===== FACTORY BLOCK =====//
 						Factory factory = new Factory {
@@ -122,34 +124,16 @@ namespace MindustryConsole
 							Ratio = 1
 						};
 
-						double amount;
-						Material material;
-						foreach (Item item in factory.Input)
+						summaries = EditSummaries(summaries, factory);
+
+						if (factories.Count(fc => fc.Id == factory.Id) != 0)
 						{
-							amount = item.Amount * factory.Amount * factory.Ratio;
-							material = Material.GetMaterial(item.Id);
+							Factory existFactory = factories.Where(fc => fc.Id == factory.Id).First();
 
-							int index = summaries.FindIndex(x => x.Id == material.Id);
-							if (index != -1)
-								summaries[index].Outcome += amount;
-							else if (material.Type == "Power")
-								summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount, Blocked = true });
-							else
-								summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount });
+							existFactory.Amount += factory.Amount;
 						}
-						foreach (Item item in factory.Output)
-						{
-							amount = item.Amount * factory.Amount * factory.Ratio;
-							material = Material.GetMaterial(item.Id);
-
-							int index = summaries.FindIndex(x => x.Id == material.Id);
-							if (index != -1)
-								summaries[index].Income += amount;
-							else
-								summaries.Add(new Summary { Id = material.Id, Name = material.Name, Income = amount });
-						}
-
-						factories.Add(factory);
+						else
+							factories.Add(factory);
 					}
 				}
 			}
@@ -177,35 +161,10 @@ namespace MindustryConsole
 				{
 					factory.Ratio = 1;
 
-					double amount;
-					Material material;
-					foreach (Item item in factory.Input)
-					{
-						amount = item.Amount * factory.Amount * factory.Ratio;
-						material = Material.GetMaterial(item.Id);
-
-						int index = summaries.FindIndex(x => x.Id == material.Id);
-						if (index != -1)
-							summaries[index].Outcome += amount;
-						else if (material.Type == "Power")
-							summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount, Blocked = true });
-						else
-							summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount });
-					}
-					foreach (Item item in factory.Output)
-					{
-						amount = item.Amount * factory.Amount * factory.Ratio;
-						material = Material.GetMaterial(item.Id);
-
-						int index = summaries.FindIndex(x => x.Id == material.Id);
-						if (index != -1)
-							summaries[index].Income += amount;
-						else
-							summaries.Add(new Summary { Id = material.Id, Name = material.Name, Income = amount });
-					}
+					summaries = EditSummaries(summaries, factory);
 				}
 
-				CorrectSchematic(summaries, factories);
+				ShowInfo(summaries, factories);
 
 				Console.WriteLine("╔═╤═╤═╡ CHECK SСHEMATIC MENU ╞═════╗");
 				Console.WriteLine("║0├─┤ Exit                         ║");
@@ -232,12 +191,13 @@ namespace MindustryConsole
 							Id = id,
 							Name = General.GetGeneral(id).Name,
 							Amount = Convert.ToDouble(amount),
-							Input = InputOutput.GetGeneral(id).First().InputsPerSecond,
-							Output = InputOutput.GetGeneral(id).First().OutputsPerSecond,
+							Input = InputOutput.GetGeneralsIO(id).First().InputsPerSecond,
+							Output = InputOutput.GetGeneralsIO(id).First().OutputsPerSecond,
 							Ratio = 1
 						});
 					}
 				}
+				else if (select == 2) CorrectSchematic(summaries, factories);
 				else Formations.NotFound("Action");
 			}
 			while (true);
@@ -289,6 +249,41 @@ namespace MindustryConsole
 			while (true);
 		}
 
+		private static List<Summary> EditSummaries(List<Summary> summaries, Factory factory)
+		{
+			double amount;
+			Material material;
+
+			if (factory.Input != null)
+				foreach (Item item in factory.Input)
+				{
+					amount = item.Amount * factory.Amount * factory.Ratio;
+					material = Material.GetMaterial(item.Id);
+
+					int index = summaries.FindIndex(x => x.Id == material.Id);
+					if (index != -1)
+						summaries[index].Outcome += amount;
+					else if (material.Type == "Power")
+						summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount, Blocked = true });
+					else
+						summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount });
+				}
+			if (factory.Output != null)
+				foreach (Item item in factory.Output)
+				{
+					amount = item.Amount * factory.Amount * factory.Ratio;
+					material = Material.GetMaterial(item.Id);
+
+					int index = summaries.FindIndex(x => x.Id == material.Id);
+					if (index != -1)
+						summaries[index].Income += amount;
+					else
+						summaries.Add(new Summary { Id = material.Id, Name = material.Name, Income = amount });
+				}
+
+			return summaries;
+		}
+
 		private static void CorrectSchematic(List<Summary> summaries, List<Factory> factories)
 		{
 			//===== CORRECT SCHEMATIC ======//
@@ -301,7 +296,7 @@ namespace MindustryConsole
 					Summary summary = summaries[i];
 
 					//If summary is blocked or correct
-					if (factories.Count < 2 || summary.Blocked || Math.Floor(summary.Income * 100000) - Math.Floor(summary.Outcome * 100000) == 0) continue;
+					if (summary.Blocked || Math.Floor(summary.Income * 100000) - Math.Floor(summary.Outcome * 100000) == 0) continue;
 					allCorrect = false;
 					double result = summary.Income - summary.Outcome;
 
@@ -309,6 +304,12 @@ namespace MindustryConsole
 					int[] factoryIO;
 					if (result < 0) factoryIO = factories.Where(fc => fc.Input.Count(x => x.Id == summary.Id) != 0).Select(str => str.GetHashCode()).ToArray();
 					else factoryIO = factories.Where(fc => fc.Output.Count(x => x.Id == summary.Id) != 0).Select(str => str.GetHashCode()).ToArray();
+
+					if (factoryIO.Length == 0)
+					{
+						summary.Income = Math.Min(summary.Income, summary.Outcome);
+						summary.Outcome = Math.Min(summary.Income, summary.Outcome);
+					}
 
 					foreach (int hash in factoryIO)
 					{
@@ -318,14 +319,15 @@ namespace MindustryConsole
 						if (summary.Outcome == 0) summary.Outcome = summary.Income;
 
 						double ratio = summary.Income / summary.Outcome; //Set ratio
+						ratio = ratio > 1 ? 1 / ratio : ratio;
 
 						//Get summaries, where summaries as Output.
 						summariesIO = summaries.Where(sm => factory.Output.Count(fi => fi.Id == sm.Id) != 0).ToArray();
 						foreach (Summary summaryIO in summariesIO)
 						{
 							Item item = factory.Output.First(fi => fi.Id == summaryIO.Id); //Get summary's item
-							double amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio; //Caolculate amount
-							summaryIO.Income -= ratio > 1 ? amount - amount / ratio : amount - amount * ratio; //Edit Income
+							double amount = item.Amount * factory.Amount * factory.Ratio; //Caolculate amount
+							summaryIO.Income -= amount - amount * ratio; //Edit Income
 						}
 
 						if (factory.Name != "Water Extractor" || result < 0)
@@ -335,8 +337,8 @@ namespace MindustryConsole
 							foreach (Summary summaryIO in summariesIO)
 							{
 								Item item = factory.Input.First(fi => fi.Id == summaryIO.Id); //Get summary's item
-								double amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio; //Caolculate amount
-								summaryIO.Outcome -= ratio > 1 ? amount - amount / ratio : amount - amount * ratio; //Edit Outcome
+								double amount = item.Amount * factory.Amount * factory.Ratio; //Caolculate amount
+								summaryIO.Outcome -= amount - amount * ratio; //Edit Outcome
 							}
 						}
 
@@ -348,6 +350,11 @@ namespace MindustryConsole
 			}
 			while (!allCorrect);
 
+			ShowInfo(summaries, factories);
+		}
+
+		private static void ShowInfo(List<Summary> summaries, List<Factory> factories)
+		{
 			//===== SHOW FACTORIES =====//
 			foreach (Factory factory in factories)
 			{
@@ -355,19 +362,21 @@ namespace MindustryConsole
 				Material material;
 
 				Console.WriteLine("===== {0} ({1}) =====", factory.Name.ToUpper(), factory.Amount);
-				foreach (Item item in factory.Input)
-				{
-					if (factory.Name != "Water Extractor") amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
-					else amount = item.Amount * factory.Amount;
-					material = Material.GetMaterial(item.Id);
-					Console.WriteLine("- {0} {1}", amount, material.Name);
-				}
-				foreach (Item item in factory.Output)
-				{
-					amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
-					material = Material.GetMaterial(item.Id);
-					Console.WriteLine("+ {0} {1}", amount, material.Name);
-				}
+				if (factory.Input != null)
+					foreach (Item item in factory.Input)
+					{
+						if (factory.Name != "Water Extractor") amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
+						else amount = item.Amount * factory.Amount;
+						material = Material.GetMaterial(item.Id);
+						Console.WriteLine("- {0} {1}", amount, material.Name);
+					}
+				if (factory.Output != null)
+					foreach (Item item in factory.Output)
+					{
+						amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
+						material = Material.GetMaterial(item.Id);
+						Console.WriteLine("+ {0} {1}", amount, material.Name);
+					}
 				Console.WriteLine();
 			}
 
@@ -428,5 +437,7 @@ namespace MindustryConsole
 		public double Income { get; set; }
 		public double Outcome { get; set; }
 		public bool Blocked { get; set; }
+		public bool Conveyor { get; set; }
+
 	}
 }

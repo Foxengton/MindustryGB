@@ -145,9 +145,18 @@ namespace MindustryLibrary
 
 		public override string ToString()
 		{
-			return $"{General.GetGeneral(GeneralId)}: {string.Join(", ", Inputs.Select(bc => bc.ToString()))} => {string.Join(", ", Outputs.Select(bc => bc.ToString()))} [{Weight}]";
-		}
+			string input = "null";
+			string output = "null";
 
+			if (Input != null)
+				input = string.Join(", ", Inputs.Select(bc => bc.ToString()));
+
+			if (Output != null)
+				output = string.Join(", ", Outputs.Select(bc => bc.ToString()));
+
+			return $"{GetGeneral}: {input} => {output} [{Weight}]";
+		}
+		public General GetGeneral => General.GetGeneral(GeneralId);
 
 		private void CalculateWeight()
 		{
@@ -156,8 +165,8 @@ namespace MindustryLibrary
 			double totalWeight;
 
 			//If owner have not a weight
-			if (General.GetGeneral(GeneralId).Weight == null) return;
-			else baseWeight = Convert.ToDouble(General.GetGeneral(GeneralId).Weight);
+			if (GetGeneral.Weight == null) return;
+			else baseWeight = Convert.ToDouble(GetGeneral.Weight);
 
 			if (Input != null)
 			{
@@ -188,7 +197,7 @@ namespace MindustryLibrary
 		}
 
 		public static InputOutput GetInputOutput(string id) => InputsOutputs.First(io => io.Id == id);
-		public static InputOutput[] GetGeneral(string generalId) => InputsOutputs.Where(io => io.GeneralId == generalId).ToArray();
+		public static InputOutput[] GetGeneralsIO(string generalId) => InputsOutputs.Where(io => io.GeneralId == generalId).ToArray();
 		public static InputOutput[] InputsOutputs => Load();
 		public static string NextId => (InputsOutputs.Max(io => Convert.ToInt32(io.Id)) + 1).ToString();
 	}

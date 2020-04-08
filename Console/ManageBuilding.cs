@@ -43,6 +43,8 @@ namespace MindustryConsole
 			do
 			{
 				General general = General.GetGeneral(id);
+				if (general == null) return;
+
 				InputOutput[] inputsOutputs = InputOutput.InputsOutputs.Where(io => io.GeneralId == general.Id).ToArray();
 
 				ShowInfo(general, inputsOutputs);
@@ -58,7 +60,18 @@ namespace MindustryConsole
 				//Input/Output
 				Console.WriteLine("║5 0├─┤ Add Input/Output  ║");
 				for (int i = 0; i < inputsOutputs.Length; i++)
-					Console.WriteLine("║5 {0}├─┤ Edit {1}/{2} ║", i + 1, string.Join(", ", inputsOutputs[i].Inputs.Select(it => it.ToString())), string.Join(", ", inputsOutputs[i].Outputs.Select(it => it.ToString())));
+				{
+					string input = "";
+					string output = "";
+
+					if (inputsOutputs[i].Inputs != null)
+					input = string.Join(", ", inputsOutputs[i].Inputs.Select(it => it.ToString()));
+
+					if (inputsOutputs[i].Outputs != null)
+						output = string.Join(", ", inputsOutputs[i].Outputs.Select(it => it.ToString()));
+
+					Console.WriteLine("║5 {0}├─┤ Edit {1}/{2} ║", i + 1, input, output);
+				}
 
 				Console.WriteLine("║ 9 ├─┤ Delete            ║");
 				Console.WriteLine("╟───┘ └───────────────────╢");
@@ -162,24 +175,24 @@ namespace MindustryConsole
 
 		public static void ShowAll(int offset = 0)
 		{
-			Console.WriteLine("┌────┬──────────────────┬───────┬─────────┬───────┬─────┬──────────┬───────────┬────────────┬────────────┐");
-			Console.WriteLine("│ ID │ Name             │ Power │ Liquids │ Items │ I/O │ Shooting │ Opt. Enh. │ Mod        │ Weight     │");
-			Console.WriteLine("├────┼──────────────────┼───────┼─────────┼───────┼─────┼──────────┼───────────┼────────────┼────────────┤");
+			Console.WriteLine("┌────┬──────────────────┬──────────────┬───────┬─────────┬───────┬─────┬──────────┬───────────┬────────────┬────────────┐");
+			Console.WriteLine("│ ID │ Name             │ Type         │ Power │ Liquids │ Items │ I/O │ Shooting │ Opt. Enh. │ Mod        │ Weight     │");
+			Console.WriteLine("├────┼──────────────────┼──────────────┼───────┼─────────┼───────┼─────┼──────────┼───────────┼────────────┼────────────┤");
 			for (int i = 0; i < General.Count; i++)
 			{
 				General gen = General.Generals[i];
-				InputOutput[] inputOutput = InputOutput.GetGeneral(gen.Id);
+				InputOutput[] inputOutput = InputOutput.GetGeneralsIO(gen.Id);
 
 				int id = i + offset;
 				string name = gen.Name.Length > 16 ? gen.Name.Substring(0, 13) + "..." : gen.Name.PadRight(16, ' ');
+				string type = gen.Type;
 				string power = "0";
 				string liquids = "0";
 				string items = "0";
 
-
-				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 5} │ {3, 7} │ {4, 5} │ {5, 3} │ {6, 8} │ {7, 9} │ {8, 10} │ {9, 10} │", id, name, power, liquids, items, inputOutput.Length, 0, 0, gen.Mod, gen.Weight);
+				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 12} │ {3, 5} │ {4, 7} │ {5, 5} │ {6, 3} │ {7, 8} │ {8, 9} │ {9, 10} │ {10, 10} │", id, name, type, power, liquids, items, inputOutput.Length, 0, 0, gen.Mod, gen.Weight);
 			}
-			Console.WriteLine("└────┴──────────────────┴───────┴─────────┴───────┴─────┴──────────┴───────────┴────────────┴────────────┘");
+			Console.WriteLine("└────┴──────────────────┴──────────────┴───────┴─────────┴───────┴─────┴──────────┴───────────┴────────────┴────────────┘");
 		}
 
 		private static void ShowInfo(General general, InputOutput[] inputsOutputs)

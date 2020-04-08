@@ -32,7 +32,7 @@ namespace MindustryLibrary
 				cnn.Execute($"INSERT INTO Generals VALUES(@Id, @Name, @Description, @Type, @Health, @Size, @BuildTime, @BuildCost, @Mod, @Weight);", this);
 			}
 
-			InputOutput.GetGeneral(Id).ToList().ForEach(fe => fe.Update());
+			InputOutput.GetGeneralsIO(Id).ToList().ForEach(fe => fe.Update());
 		}
 		public void Update()
 		{
@@ -44,7 +44,7 @@ namespace MindustryLibrary
 				cnn.Execute($"UPDATE Generals SET name = @Name, description = @Description, type = @Type, health = @Health, size = @Size, buildTime = @BuildTime, buildCost = @BuildCost, mod = @Mod, weight = @Weight WHERE id = @Id;", this);
 			}
 
-			InputOutput.GetGeneral(Id).ToList().ForEach(fe => fe.Update());
+			InputOutput.GetGeneralsIO(Id).ToList().ForEach(fe => fe.Update());
 		}
 		public void Delete()
 		{
@@ -129,7 +129,7 @@ namespace MindustryLibrary
 			return weight;
 		}
 
-		public static General GetGeneral(string id) => Generals.First(gen => gen.Id == id);
+		public static General GetGeneral(string id) => Generals.Count(gen => gen.Id == id) != 0 ? Generals.First(gen => gen.Id == id) : null;
 		public static void Refresh(string materialId = "")
 		{
 			if (materialId == "") for (int i = 0; i < Generals.Length; i++) Generals[i].Save();

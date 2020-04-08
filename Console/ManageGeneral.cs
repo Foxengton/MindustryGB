@@ -30,7 +30,29 @@ namespace MindustryConsole
 				Console.Clear();
 
 				if (select == '0') return;
-				else if (select == '1') general.Name = Formations.SetValue("name", "string");
+				else if (select == '1')
+				{
+					string name = Formations.SetValue("name", "string");
+
+					if (General.Generals.Count(gen => gen.Name == name) != 0)
+					{
+						Console.WriteLine("═════════╡ THIS BUILDING ALREADY EXIST ╞═════════");
+						Console.WriteLine("1. Go to edit");
+						Console.WriteLine("0. Exit");
+
+						Console.Write("> ");
+						select = Console.ReadKey().KeyChar;
+						Console.Clear();
+
+						if (select == '1')
+						{
+							Update(General.Generals.Where(gen => gen.Name == name).First());
+							return;
+						}
+					}
+
+					general.Name = name;
+				}
 				else if (select == '2') general.Type = Formations.SetValue("type", "string");
 				else if (select == '3') general.Description = Formations.SetValue("description", "string");
 				else if (select == '4') general.Health = Formations.SetValue("health", "int");
@@ -49,7 +71,7 @@ namespace MindustryConsole
 				}
 				else Formations.NotFound("Action");
 			}
-			while (select != '0');
+			while (true);
 		}
 	}
 }
