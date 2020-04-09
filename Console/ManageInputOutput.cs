@@ -54,7 +54,7 @@ namespace MindustryConsole
 				}
 				else if (select == '2')
 				{
-					Item[] output = ManageMaterial.SetItems(false, true);
+					Item[] output = ManageMaterial.SetItems(true);
 					if (output != null) inputOutput.Output = string.Join(";", output.Select(inp => inp.Id + " " + inp.Amount));
 				}
 				else if (select == '3') inputOutput.ProductionTime = Formations.GetValue("Production Time", "double");

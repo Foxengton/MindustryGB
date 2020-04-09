@@ -58,7 +58,6 @@ namespace MindustryLibrary
 
 		#region//===== OTHER FUNCTION =====//
 		public static Material GetMaterial(string id) => Materials.Count(mat => mat.Id == id) != 0 ? Materials.First(mat => mat.Id == id) : null;
-		public static Material[] GetAvailable => Materials.Where(mat => mat.Weight != null).ToArray();
 		public Mod GetMod => Mod == null ? null : MindustryLibrary.Mod.GetMod(Mod);
 		public TypeItem GetTypeMaterial => Type == null ? null : TypeItem.GetType(Type);
 

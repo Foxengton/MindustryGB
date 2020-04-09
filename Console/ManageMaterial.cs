@@ -97,17 +97,14 @@ namespace MindustryConsole
 			while (true);
 		}
 
-		public static Item[] SetItems(bool OnlyAvailable = true, bool onlyOne = false)
+		public static Item[] SetItems(bool onlyOne = false)
 		{
 			int offset = 3;
 			string[] input;
 			double amount;
 			int select;
 			List<Item> items = new List<Item>();
-			Material[] materials;
-
-			if (OnlyAvailable) materials = Material.GetAvailable;
-			else materials = Material.Materials;
+			Material[] materials = Material.Materials;
 
 			do
 			{

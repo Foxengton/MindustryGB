@@ -32,7 +32,7 @@ namespace MindustryConsole
 
 		private static void CreateSchematic()
 		{
-			Item targetItem = ManageMaterial.SetItems(true, true).First();
+			Item targetItem = ManageMaterial.SetItems(true).First();
 			List<Summary> summaries = new List<Summary> { new Summary
 			{
 				Id = targetItem.Id,
