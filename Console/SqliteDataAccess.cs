@@ -12,6 +12,8 @@ namespace MindustryConsole
 			General.DBPath = DBPath;
 			Power.DBPath = DBPath;
 			InputOutput.DBPath = DBPath;
+
+			Mod.DBPath = DBPath;
 		}
 
 		private static string GetDatabasePath()

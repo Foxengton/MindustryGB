@@ -87,6 +87,7 @@ namespace MindustryLibrary
 		public static General GetGeneral(string id) => Generals.Count(gen => gen.Id == id) != 0 ? Generals.First(gen => gen.Id == id) : null;
 		public InputOutput[] GetInputOutputs => InputOutput.InputsOutputs.Where(io => io.GeneralId == Id).ToArray();
 		public Power[] GetPowers => Power.Powers.Where(power => power.GeneralId == Id).ToArray();
+		public Mod GetMod => Mod == null ? null : MindustryLibrary.Mod.GetMod(Mod);
 
 		public static int Count => Generals.Count();
 		public static string NextId => Count == 0 ? "0" : (Generals.Max(gen => Convert.ToInt32(gen.Id)) + 1).ToString();
@@ -96,7 +97,7 @@ namespace MindustryLibrary
 		#region//===== OVERRIDES =====//
 		public override string ToString()
 		{
-			return $"{Id}. {Name} {Weight} [{string.Join(", ", BuildCosts.Select(bc => bc.ToString()))}]";
+			return $"{Name} ({string.Join(", ", BuildCosts.Select(bc => bc.ToString()))})";
 		}
 		#endregion
 

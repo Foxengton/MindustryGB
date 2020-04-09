@@ -71,6 +71,7 @@
     <Compile Include="ManageGeneral.cs" />
     <Compile Include="ManageInputOutput.cs" />
     <Compile Include="ManageMaterial.cs" />
+    <Compile Include="ManageMod.cs" />
     <Compile Include="ManagePower.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

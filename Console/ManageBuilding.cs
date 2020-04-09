@@ -214,7 +214,7 @@ namespace MindustryConsole
 				string type = gen.Type;
 				string power = gen.GetPowers.Count() != 0 ? gen.GetPowers.First().PowerUse : "";
 
-				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 12} │ {3, 5} │ {4, 3} │ {5, 8} │ {6, 9} │ {7, 10} │ {8, 10} │", id, name, type, power, inputOutput.Length, 0, 0, gen.Mod, gen.Weight);
+				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 12} │ {3, 5} │ {4, 3} │ {5, 8} │ {6, 9} │ {7, 10} │ {8, 10} │", id, name, type, power, inputOutput.Length, 0, 0, gen.GetMod, gen.Weight);
 			}
 			Console.WriteLine("└────┴──────────────────┴──────────────┴───────┴─────┴──────────┴───────────┴────────────┴────────────┘");
 		}

@@ -61,10 +61,8 @@ namespace MindustryLibrary
 		public General GetGeneral => General.GetGeneral(GeneralId);
 		public InputOutput GetInputOutput => InputOutput.GetInputOutput(InputOutputId);
 
-
 		public static int Count => Powers.Count();
 		public static string NextId => Count == 0 ? "0" : (Powers.Max(power => Convert.ToInt32(power.Id)) + 1).ToString();
-
 		#endregion
 
 		#region//===== OVERRIDES =====//

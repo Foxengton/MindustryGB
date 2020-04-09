@@ -20,7 +20,7 @@ namespace MindustryConsole
 				Console.WriteLine("[5] Size: {0}", general.Size);
 				Console.WriteLine("[6] Build Time: {0}", general.BuildTime);
 				Console.WriteLine("[7] Build Cost: {0}", general.BuildCosts);
-				Console.WriteLine("[8] Mod: {0}", general.Mod);
+				Console.WriteLine("[8] Mod: {0}", general.GetMod);
 				Console.WriteLine("Weight: {0}", general.Weight);
 				Console.WriteLine("[9] Save");
 				Console.WriteLine("[0] Exit");
@@ -91,7 +91,7 @@ namespace MindustryConsole
 					Item[] buildCost = ManageMaterial.SetItems();
 					if (buildCost != null) general.BuildCost = string.Join(";", buildCost.Select(inp => inp.Id + " " + inp.Amount));
 				}
-				else if (select == '8') general.Mod = Formations.GetValue("mod", "string");
+				else if (select == '8') general.Mod = ManageMod.SetMod();
 				else if (select == '9')
 				{
 					bool allCorrect = true;

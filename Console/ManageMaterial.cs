@@ -44,7 +44,7 @@ namespace MindustryConsole
 				Console.WriteLine("║0├─┤ Exit");
 				Console.WriteLine("║1├─┤ Change name");
 				Console.WriteLine("║2├─┤ Type: {0}", material.Type);
-				Console.WriteLine("║3├─┤ Mod: {0}", material.Mod);
+				Console.WriteLine("║3├─┤ Mod: {0}", material.GetMod);
 				Console.WriteLine("║4├─┤ Color: {0}", material.Color);
 				
 				string ProducedIn = string.Join(", ", General.Generals.Where(gen => InputOutput.InputsOutputs.Count(io => io.Outputs != null && io.GeneralId == gen.Id && io.Outputs.Count(it => it.Id == material.Id) != 0) != 0).Select(sel => sel.Name));
@@ -66,7 +66,7 @@ namespace MindustryConsole
 				if (select == '0') return;
 				else if (select == '1') material.Name = Formations.GetValue("Name", "string");
 				else if (select == '2') material.Type = Formations.GetValue("Type", "string");
-				else if (select == '3') material.Mod = Formations.GetValue("Mod", "string");
+				else if (select == '3') material.Mod = ManageMod.SetMod();
 				else if (select == '4') material.Color = Formations.GetValue("Color", "string");
 				else if (select == '8')
 				{
@@ -170,7 +170,7 @@ namespace MindustryConsole
 				int id = i + offset;
 				string name = mat.Name.PadRight(20, ' ');
 
-				Console.WriteLine("│ {0,2} │ {1, 20} │ {2, 7} │ {3, 10} │ {4, 10} │ {5, 7} │", id, name, mat.Type, mat.Mod, mat.Weight, mat.Color);
+				Console.WriteLine("│ {0,2} │ {1, 20} │ {2, 7} │ {3, 10} │ {4, 10} │ {5, 7} │", id, name, mat.Type, mat.GetMod, mat.Weight, mat.Color);
 			}
 			Console.WriteLine("└────┴──────────────────────┴─────────┴────────────┴────────────┴─────────┘");
 		}
