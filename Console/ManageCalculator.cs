@@ -353,14 +353,69 @@ namespace MindustryConsole
 
 		private static void ShowInfo(List<Summary> summaries, List<Factory> factories)
 		{
-			Summary power = new Summary { Name = "Power" };
+			#region//===== SHOW RATIOS =====//
+			double averageRatio = 0;
 
-			//===== SHOW FACTORIES =====//
+			Console.WriteLine("===== RATIOS =====");
+			foreach (Factory factory in factories)
+			{
+				averageRatio += factory.Ratio;
+
+				factory.Amount = Math.Ceiling(factory.Amount * factory.Ratio * 100) / 100;
+
+				Console.WriteLine("{0, 2} ({1, 4}) {2}", Math.Ceiling(factory.Amount), factory.Amount, factory.Name.ToUpper());
+			}
+			Console.WriteLine("AVERAGE RATIO: {0}%", Math.Round(averageRatio / factories.Count * 10000) / 100);
+			Console.WriteLine("");
+			#endregion
+
+			#region//===== SHOW FACTORIES =====//
 			foreach (Factory factory in factories)
 			{
 				double amount;
 				Material material;
 
+				Console.WriteLine("===== {0} ({1}) =====", factory.Name.ToUpper(), factory.Amount);
+
+				if (factory.Input != null)
+					foreach (Item item in factory.Input)
+					{
+						if (factory.Name != "Water Extractor")
+							amount = item.Amount * factory.Amount * factory.Ratio;
+						else
+							amount = item.Amount * factory.Amount;
+
+						material = Material.GetMaterial(item.Id);
+
+						Console.WriteLine("- {0,4} {1}", Math.Ceiling(amount * 100) / 100, material.Name);
+					}
+
+				if (factory.Output != null)
+					foreach (Item item in factory.Output)
+					{
+						amount = item.Amount * factory.Amount * factory.Ratio;
+
+						material = Material.GetMaterial(item.Id);
+
+						Console.WriteLine("+ {0,4} {1}", Math.Floor(amount * 100) / 100, material.Name);
+					}
+				Console.WriteLine();
+			}
+			#endregion
+
+			#region//===== SHOW SUMMARIES =====//
+			if (summaries.Count != 0)
+			{
+				Console.WriteLine("===== SUMMARY =====");
+				foreach (Summary summary in summaries)
+					Console.WriteLine("{0}: {1} - {2} = {3}", summary.Name, summary.Income, summary.Outcome, summary.Income - summary.Outcome);
+			}
+			#endregion
+
+			#region//===== SHOW POWER =====//
+			Summary power = new Summary { Name = "Power" };
+			foreach (Factory factory in factories)
+			{
 				Power[] powers = General.GetGeneral(factory.Id).GetPowers;
 
 				if (powers.Length == 1)
@@ -372,51 +427,10 @@ namespace MindustryConsole
 					else
 						power.Outcome += Convert.ToDouble(powers.First().PowerUse) * factory.Amount;
 				}
-
-				Console.WriteLine("===== {0} ({1}) =====", factory.Name.ToUpper(), factory.Amount);
-				if (factory.Input != null)
-					foreach (Item item in factory.Input)
-					{
-						if (factory.Name != "Water Extractor") amount = item.Amount * factory.Amount * factory.Ratio;
-						else amount = item.Amount * factory.Amount;
-						material = Material.GetMaterial(item.Id);
-						Console.WriteLine("- {0} {1}", amount, material.Name);
-					}
-				if (factory.Output != null)
-					foreach (Item item in factory.Output)
-					{
-						amount = item.Amount * factory.Amount * factory.Ratio;
-						material = Material.GetMaterial(item.Id);
-						Console.WriteLine("+ {0} {1}", amount, material.Name);
-					}
-				Console.WriteLine();
 			}
-
-			//===== SHOW SUMMARIES =====//
-			if (summaries.Count != 0)
-			{
-				Console.WriteLine("===== SUMMARY =====");
-				foreach (Summary summary in summaries)
-					Console.WriteLine("{0}: {1} - {2} = {3}", summary.Name, summary.Income, summary.Outcome, summary.Income - summary.Outcome);
-				Console.WriteLine("{0}: {1} - {2} = {3}", power.Name, power.Income, power.Outcome, power.Income - power.Outcome);
-				Console.WriteLine();
-			}
-
-			//===== SHOW RATIOS =====//
-			double averageRatio = 0;
-			Console.WriteLine("===== RATIOS =====");
-			foreach (Factory factory in factories)
-			{
-				if (factory.Ratio > 1) averageRatio += factory.Amount / factory.Ratio / factory.Amount;
-				else averageRatio += factory.Ratio;
-
-				double amount = Math.Ceiling((factory.Ratio > 1 ? factory.Amount / factory.Ratio : factory.Amount * factory.Ratio) * 100) / 100;
-				double whole = Math.Ceiling(amount);
-
-				Console.WriteLine("{0} ({1})/{2} {3}", whole, amount, factory.Amount, factory.Name.ToUpper());
-			}
-			Console.WriteLine("AVERAGE RATIO: {0}%", Math.Round(averageRatio / factories.Count * 10000) / 100);
+			Console.WriteLine("{0}: {1} - {2} = {3}", power.Name, power.Income, power.Outcome, power.Income - power.Outcome);
 			Console.WriteLine();
+			#endregion
 		}
 	}
 
