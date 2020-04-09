@@ -43,7 +43,7 @@ namespace MindustryConsole
 				Console.WriteLine("╔═╤═╤═══╡ {0}. {1} ╞════════", material.Id, material.Name.ToUpper());
 				Console.WriteLine("║0├─┤ Exit");
 				Console.WriteLine("║1├─┤ Change name");
-				Console.WriteLine("║2├─┤ Type: {0}", material.Type);
+				Console.WriteLine("║2├─┤ Type: {0}", material.GetTypeMaterial);
 				Console.WriteLine("║3├─┤ Mod: {0}", material.GetMod);
 				Console.WriteLine("║4├─┤ Color: {0}", material.Color);
 				
@@ -65,8 +65,18 @@ namespace MindustryConsole
 
 				if (select == '0') return;
 				else if (select == '1') material.Name = Formations.GetValue("Name", "string");
-				else if (select == '2') material.Type = Formations.GetValue("Type", "string");
-				else if (select == '3') material.Mod = ManageMod.SetMod();
+				else if (select == '2')
+				{
+					string type = ManageType.SetType("Item");
+					if (type != null)
+						material.Type = type;
+				}
+				else if (select == '3')
+				{
+					string mod = ManageMod.SetMod();
+					if (mod != null)
+						material.Mod = mod;
+				}
 				else if (select == '4') material.Color = Formations.GetValue("Color", "string");
 				else if (select == '8')
 				{
@@ -160,9 +170,9 @@ namespace MindustryConsole
 		{
 			if (materials == null) materials = Material.Materials;
 
-			Console.WriteLine("┌────┬──────────────────────┬─────────┬────────────┬────────────┬─────────┐");
-			Console.WriteLine("│ ID │ Name                 │ Type    │ Mod        │ Weight     │ Color   │");
-			Console.WriteLine("├────┼──────────────────────┼─────────┼────────────┼────────────┼─────────┤");
+			Console.WriteLine("┌────┬──────────────────────┬─────────┬───────────────┬────────────┬─────────┐");
+			Console.WriteLine("│ ID │ Name                 │ Type    │ Mod           │ Weight     │ Color   │");
+			Console.WriteLine("├────┼──────────────────────┼─────────┼───────────────┼────────────┼─────────┤");
 
 			for (int i = 0; i < materials.Length; i++)
 			{
@@ -170,9 +180,9 @@ namespace MindustryConsole
 				int id = i + offset;
 				string name = mat.Name.PadRight(20, ' ');
 
-				Console.WriteLine("│ {0,2} │ {1, 20} │ {2, 7} │ {3, 10} │ {4, 10} │ {5, 7} │", id, name, mat.Type, mat.GetMod, mat.Weight, mat.Color);
+				Console.WriteLine("│ {0,2} │ {1, 20} │ {2, 7} │ {3, 13} │ {4, 10} │ {5, 7} │", id, name, mat.GetTypeMaterial, mat.GetMod, mat.Weight, mat.Color);
 			}
-			Console.WriteLine("└────┴──────────────────────┴─────────┴────────────┴────────────┴─────────┘");
+			Console.WriteLine("└────┴──────────────────────┴─────────┴───────────────┴────────────┴─────────┘");
 		}
 	}
 }

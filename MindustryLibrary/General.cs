@@ -88,6 +88,7 @@ namespace MindustryLibrary
 		public InputOutput[] GetInputOutputs => InputOutput.InputsOutputs.Where(io => io.GeneralId == Id).ToArray();
 		public Power[] GetPowers => Power.Powers.Where(power => power.GeneralId == Id).ToArray();
 		public Mod GetMod => Mod == null ? null : MindustryLibrary.Mod.GetMod(Mod);
+		public TypeItem GetTypeMaterial => Type == null ? null : TypeItem.GetType(Type);
 
 		public static int Count => Generals.Count();
 		public static string NextId => Count == 0 ? "0" : (Generals.Max(gen => Convert.ToInt32(gen.Id)) + 1).ToString();

@@ -73,6 +73,7 @@
     <Compile Include="ManageMaterial.cs" />
     <Compile Include="ManageMod.cs" />
     <Compile Include="ManagePower.cs" />
+    <Compile Include="ManageType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqliteDataAccess.cs" />

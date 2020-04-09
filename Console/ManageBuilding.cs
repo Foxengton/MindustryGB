@@ -201,9 +201,9 @@ namespace MindustryConsole
 
 		public static void ShowAll(int offset = 0)
 		{
-			Console.WriteLine("┌────┬──────────────────┬──────────────┬───────┬─────┬──────────┬───────────┬────────────┬────────────┐");
-			Console.WriteLine("│ ID │ Name             │ Type         │ Power │ I/O │ Shooting │ Opt. Enh. │ Mod        │ Weight     │");
-			Console.WriteLine("├────┼──────────────────┼──────────────┼───────┼─────┼──────────┼───────────┼────────────┼────────────┤");
+			Console.WriteLine("┌────┬──────────────────┬──────────────┬───────┬─────┬──────────┬───────────┬───────────────┬────────────┐");
+			Console.WriteLine("│ ID │ Name             │ Type         │ Power │ I/O │ Shooting │ Opt. Enh. │ Mod           │ Weight     │");
+			Console.WriteLine("├────┼──────────────────┼──────────────┼───────┼─────┼──────────┼───────────┼───────────────┼────────────┤");
 			for (int i = 0; i < General.Count; i++)
 			{
 				General gen = General.Generals[i];
@@ -211,19 +211,19 @@ namespace MindustryConsole
 
 				int id = i + offset;
 				string name = gen.Name.Length > 16 ? gen.Name.Substring(0, 13) + "..." : gen.Name.PadRight(16, ' ');
-				string type = gen.Type;
+				string type = gen.GetTypeMaterial.ToString();
 				string power = gen.GetPowers.Count() != 0 ? gen.GetPowers.First().PowerUse : "";
 
-				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 12} │ {3, 5} │ {4, 3} │ {5, 8} │ {6, 9} │ {7, 10} │ {8, 10} │", id, name, type, power, inputOutput.Length, 0, 0, gen.GetMod, gen.Weight);
+				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 12} │ {3, 5} │ {4, 3} │ {5, 8} │ {6, 9} │ {7, 13} │ {8, 10} │", id, name, type, power, inputOutput.Length, 0, 0, gen.GetMod, gen.Weight);
 			}
-			Console.WriteLine("└────┴──────────────────┴──────────────┴───────┴─────┴──────────┴───────────┴────────────┴────────────┘");
+			Console.WriteLine("└────┴──────────────────┴──────────────┴───────┴─────┴──────────┴───────────┴───────────────┴────────────┘");
 		}
 
 		private static void ShowInfo(string id)
 		{
 			//===== GENERAL =====//
 			General general = General.GetGeneral(id);
-			Console.WriteLine("══════════════╡ {0}. {1} ({2}) ╞══════════════", general.Id, general.Name, general.Type);
+			Console.WriteLine("══════════════╡ {0}. {1} ({2}) ╞══════════════", general.Id, general.Name, general.GetTypeMaterial);
 			Console.WriteLine("──────────────────────────────────────────────────\n{0}\n──────────────────────────────────────────────────", general.Description);
 			Formations.Header("GENERAL");
 			Console.WriteLine(" Health: {0}", general.Health);

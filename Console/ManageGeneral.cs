@@ -14,7 +14,7 @@ namespace MindustryConsole
 				Console.WriteLine("═════════╡ GENERAL ╞═════════");
 				Console.WriteLine("ID: {0}", general.Id);
 				Console.WriteLine("[1] Name: {0}", general.Name);
-				Console.WriteLine("[2] Type: {0}", general.Type);
+				Console.WriteLine("[2] Type: {0}", general.GetTypeMaterial);
 				Console.WriteLine("[3] Description: {0}", general.Description);
 				Console.WriteLine("[4] Health: {0}", general.Health);
 				Console.WriteLine("[5] Size: {0}", general.Size);
@@ -81,7 +81,12 @@ namespace MindustryConsole
 
 					general.Name = name;
 				}
-				else if (select == '2') general.Type = Formations.GetValue("type", "string");
+				else if (select == '2')
+				{
+					string type = ManageType.SetType("Block");
+					if (type != null)
+						general.Type = type;
+				}
 				else if (select == '3') general.Description = Formations.GetValue("description", "string");
 				else if (select == '4') general.Health = Formations.GetValue("health", "int");
 				else if (select == '5') general.Size = Formations.GetValue("size", "size");
@@ -89,9 +94,15 @@ namespace MindustryConsole
 				else if (select == '7')
 				{
 					Item[] buildCost = ManageMaterial.SetItems();
-					if (buildCost != null) general.BuildCost = string.Join(";", buildCost.Select(inp => inp.Id + " " + inp.Amount));
+					if (buildCost != null)
+						general.BuildCost = string.Join(";", buildCost.Select(inp => inp.Id + " " + inp.Amount));
 				}
-				else if (select == '8') general.Mod = ManageMod.SetMod();
+				else if (select == '8')
+				{
+					string mod = ManageMod.SetMod();
+					if (mod != null)
+						general.Mod = mod;
+				}
 				else if (select == '9')
 				{
 					bool allCorrect = true;

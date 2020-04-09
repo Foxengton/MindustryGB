@@ -11,14 +11,13 @@ namespace MindustryConsole
 	{
 		public static string SetMod()
 		{
-			int offset = 2;
+			int offset = 1;
 			int select;
 
 			do
 			{
 				Console.WriteLine("╔═╤╤═╡ SET MOD ╞════╗");
 				Console.WriteLine("║0├┤ Cancel         ║");
-				Console.WriteLine("║1├┤ Set Null       ║");
 				for (int i = 0; i < Mod.Count; i++)
 					Console.WriteLine("║{0}├┤ {1,14} ║", i + offset, Mod.Mods[i].ToString().PadRight(14, ' '));
 				Console.WriteLine("╚═╧╧════════════════╝");
@@ -27,8 +26,6 @@ namespace MindustryConsole
 				Console.Clear();
 
 				if (select == 0)
-					return "";
-				else if (select == 1)
 					return null;
 				else if (select >= offset && select < Mod.Count + offset)
 					return Mod.Mods[select - offset].Id;
@@ -36,11 +33,6 @@ namespace MindustryConsole
 					Formations.NotCorrect("Action");
 			}
 			while (true);
-		}
-
-		public static void ShowAll()
-		{
-
 		}
 	}
 }

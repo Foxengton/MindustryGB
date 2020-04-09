@@ -60,6 +60,7 @@ namespace MindustryLibrary
 		public static Material GetMaterial(string id) => Materials.Count(mat => mat.Id == id) != 0 ? Materials.First(mat => mat.Id == id) : null;
 		public static Material[] GetAvailable => Materials.Where(mat => mat.Weight != null).ToArray();
 		public Mod GetMod => Mod == null ? null : MindustryLibrary.Mod.GetMod(Mod);
+		public TypeItem GetTypeMaterial => Type == null ? null : TypeItem.GetType(Type);
 
 		public static int Count => Materials.Count();
 		public static string NextId => Count == 0 ? "0" : (Materials.Max(mat => Convert.ToInt32(mat.Id)) + 1).ToString();
