@@ -1,15 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.IO;
+﻿using MindustryLibrary;
 
-namespace MindustryLibrary
+namespace MindustryConsole
 {
 	public class SqliteDataAccess
 	{
-		static SqliteDataAccess()
+		public static void DataAccess()
 		{
 			DBPath = "Data source=" + GetDatabasePath();
+
+			Material.DBPath = DBPath;
+			General.DBPath = DBPath;
+			Power.DBPath = DBPath;
+			InputOutput.DBPath = DBPath;
 		}
 
 		private static string GetDatabasePath()

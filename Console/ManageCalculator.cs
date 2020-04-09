@@ -191,8 +191,8 @@ namespace MindustryConsole
 							Id = id,
 							Name = General.GetGeneral(id).Name,
 							Amount = Convert.ToDouble(amount),
-							Input = InputOutput.GetGeneralsIO(id).First().InputsPerSecond,
-							Output = InputOutput.GetGeneralsIO(id).First().OutputsPerSecond,
+							Input = General.GetGeneral(id).GetInputOutputs.First().InputsPerSecond,
+							Output = General.GetGeneral(id).GetInputOutputs.First().OutputsPerSecond,
 							Ratio = 1
 						});
 					}
@@ -263,8 +263,6 @@ namespace MindustryConsole
 					int index = summaries.FindIndex(x => x.Id == material.Id);
 					if (index != -1)
 						summaries[index].Outcome += amount;
-					else if (material.Type == "Power")
-						summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount, Blocked = true });
 					else
 						summaries.Add(new Summary { Id = material.Id, Name = material.Name, Outcome = amount });
 				}
@@ -355,17 +353,31 @@ namespace MindustryConsole
 
 		private static void ShowInfo(List<Summary> summaries, List<Factory> factories)
 		{
+			Summary power = new Summary { Name = "Power" };
+
 			//===== SHOW FACTORIES =====//
 			foreach (Factory factory in factories)
 			{
 				double amount;
 				Material material;
 
+				Power[] powers = General.GetGeneral(factory.Id).GetPowers;
+
+				if (powers.Length == 1)
+				{
+					power.Income += Convert.ToDouble(powers.First().PowerGeneration) * factory.Amount * factory.Ratio;
+
+					if (factory.Name != "Water Extractor")
+						power.Outcome += Convert.ToDouble(powers.First().PowerUse) * factory.Amount * factory.Ratio;
+					else
+						power.Outcome += Convert.ToDouble(powers.First().PowerUse) * factory.Amount;
+				}
+
 				Console.WriteLine("===== {0} ({1}) =====", factory.Name.ToUpper(), factory.Amount);
 				if (factory.Input != null)
 					foreach (Item item in factory.Input)
 					{
-						if (factory.Name != "Water Extractor") amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
+						if (factory.Name != "Water Extractor") amount = item.Amount * factory.Amount * factory.Ratio;
 						else amount = item.Amount * factory.Amount;
 						material = Material.GetMaterial(item.Id);
 						Console.WriteLine("- {0} {1}", amount, material.Name);
@@ -373,7 +385,7 @@ namespace MindustryConsole
 				if (factory.Output != null)
 					foreach (Item item in factory.Output)
 					{
-						amount = factory.Ratio > 1 ? item.Amount * factory.Amount / factory.Ratio : item.Amount * factory.Amount * factory.Ratio;
+						amount = item.Amount * factory.Amount * factory.Ratio;
 						material = Material.GetMaterial(item.Id);
 						Console.WriteLine("+ {0} {1}", amount, material.Name);
 					}
@@ -386,6 +398,7 @@ namespace MindustryConsole
 				Console.WriteLine("===== SUMMARY =====");
 				foreach (Summary summary in summaries)
 					Console.WriteLine("{0}: {1} - {2} = {3}", summary.Name, summary.Income, summary.Outcome, summary.Income - summary.Outcome);
+				Console.WriteLine("{0}: {1} - {2} = {3}", power.Name, power.Income, power.Outcome, power.Income - power.Outcome);
 				Console.WriteLine();
 			}
 

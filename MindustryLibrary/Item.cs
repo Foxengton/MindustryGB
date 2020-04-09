@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MindustryLibrary
 {
@@ -8,7 +6,7 @@ namespace MindustryLibrary
 	{
 		public override string ToString()
 		{
-			return $"{Material.GetMaterial(Id).Name} {Amount}";
+			return $"{Material.GetMaterial(Id).Name} {Math.Round(Amount * 100) / 100}";
 		}
 
 		public string Id { get; set; }

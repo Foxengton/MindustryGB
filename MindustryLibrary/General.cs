@@ -9,10 +9,10 @@ namespace MindustryLibrary
 {
 	public class General
 	{
-		//===== WORKS WITH DATABASE =====//
+		#region//===== DATABASE =====//
 		public static General[] Load()
 		{
-			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
+			using (IDbConnection cnn = new SQLiteConnection(DBPath))
 			{
 				return cnn.Query<General>("SELECT * FROM Generals ORDER BY Mod, Type, Name;", new DynamicParameters()).ToArray();
 			}
@@ -23,56 +23,28 @@ namespace MindustryLibrary
 			{
 				Update();
 				return;
-			}
+			} //If general already exist;
 
-			CalculateWeight();
-
-			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
+			using (IDbConnection cnn = new SQLiteConnection(DBPath))
 			{
 				cnn.Execute($"INSERT INTO Generals VALUES(@Id, @Name, @Description, @Type, @Health, @Size, @BuildTime, @BuildCost, @Mod, @Weight);", this);
 			}
-
-			InputOutput.GetGeneralsIO(Id).ToList().ForEach(fe => fe.Update());
 		}
 		public void Update()
 		{
-			CalculateWeight();
-			if (Weight == null) return;
-
-			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
+			using (IDbConnection cnn = new SQLiteConnection(DBPath))
 			{
-				cnn.Execute($"UPDATE Generals SET name = @Name, description = @Description, type = @Type, health = @Health, size = @Size, buildTime = @BuildTime, buildCost = @BuildCost, mod = @Mod, weight = @Weight WHERE id = @Id;", this);
+				cnn.Execute($"UPDATE Generals SET Name = @Name, Description = @Description, Type = @Type, Health = @Health, Size = @Size, BuildTime = @BuildTime, BuildCost = @BuildCost, Mod = @Mod, Weight = @Weight WHERE Id = @Id;", this);
 			}
-
-			InputOutput.GetGeneralsIO(Id).ToList().ForEach(fe => fe.Update());
 		}
 		public void Delete()
 		{
-			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
+			using (IDbConnection cnn = new SQLiteConnection(DBPath))
 			{
-				cnn.Execute($"DELETE FROM Generals WHERE id = @Id;", this);
-			}
-
-			InputOutput.InputsOutputs.Where(io => io.GeneralId == Id).ToList().ForEach(fe => fe.Delete());
-		}
-
-		public void Reset()
-		{
-			Weight = null;
-
-			using (IDbConnection cnn = new SQLiteConnection(SqliteDataAccess.DBPath))
-			{
-				cnn.Execute($"UPDATE Generals SET name = @Name, description = @Description, type = @Type, health = @Health, size = @Size, buildTime = @BuildTime, buildCost = @BuildCost, mod = @Mod, weight = @Weight WHERE id = @Id;", this);
+				cnn.Execute($"DELETE FROM Generals WHERE Id = @Id;", this);
 			}
 		}
 
-		public static void ResetAll()
-		{
-			foreach (General general in Generals)
-				general.Reset();
-		}
-
-		//===== DATABASE'S VARIABLES =====//
 		public string Id { get; set; }
 		public string Name { get; set; }
 		public string Description { get; set; }
@@ -84,7 +56,7 @@ namespace MindustryLibrary
 		public string Mod { get; set; }
 		public string Weight { get; set; }
 
-		//===== LOCAL VARIABLES =====//
+		public static General[] Generals => Load();
 		public Item[] BuildCosts
 		{
 			get
@@ -95,7 +67,10 @@ namespace MindustryLibrary
 
 				foreach (string item in items)
 				{
-					buildCost.Add(new Item {
+					if (item == "") return null;
+
+					buildCost.Add(new Item
+					{
 						Id = item.Split(' ').First(),
 						Amount = Convert.ToDouble(item.Split(' ').Last())
 					});
@@ -105,11 +80,28 @@ namespace MindustryLibrary
 			}
 		}
 
+		public static string DBPath { get; set; }
+		#endregion
+
+		#region//===== OTHER FUNCTION =====//
+		public static General GetGeneral(string id) => Generals.Count(gen => gen.Id == id) != 0 ? Generals.First(gen => gen.Id == id) : null;
+		public InputOutput[] GetInputOutputs => InputOutput.InputsOutputs.Where(io => io.GeneralId == Id).ToArray();
+		public Power[] GetPowers => Power.Powers.Where(power => power.GeneralId == Id).ToArray();
+
+		public static int Count => Generals.Count();
+		public static string NextId => Count == 0 ? "0" : (Generals.Max(gen => Convert.ToInt32(gen.Id)) + 1).ToString();
+
+		#endregion
+
+		#region//===== OVERRIDES =====//
 		public override string ToString()
 		{
 			return $"{Id}. {Name} {Weight} [{string.Join(", ", BuildCosts.Select(bc => bc.ToString()))}]";
 		}
+		#endregion
 
+		//TODO: расчёт веса и операции с весом
+		#region//===== WEIGHT =====//
 		private double CalculateWeight()
 		{
 			Weight = null;
@@ -129,21 +121,32 @@ namespace MindustryLibrary
 			return weight;
 		}
 
-		public static General GetGeneral(string id) => Generals.Count(gen => gen.Id == id) != 0 ? Generals.First(gen => gen.Id == id) : null;
+		public void Reset()
+		{
+			Weight = null;
+
+			using (IDbConnection cnn = new SQLiteConnection(DBPath))
+			{
+				cnn.Execute($"UPDATE Generals SET name = @Name, description = @Description, type = @Type, health = @Health, size = @Size, buildTime = @BuildTime, buildCost = @BuildCost, mod = @Mod, weight = @Weight WHERE id = @Id;", this);
+			}
+		}
+		public static void ResetAll()
+		{
+			foreach (General general in Generals)
+				general.Reset();
+		}
+
 		public static void Refresh(string materialId = "")
 		{
 			if (materialId == "") for (int i = 0; i < Generals.Length; i++) Generals[i].Save();
 			else
 			{
-				List<General> generals = Generals.Where(gen => gen.BuildCosts.Count(bc => bc.Id == materialId) != 0).ToList();
+				List<General> generals = Generals.Where(gen => gen.BuildCosts.Count(item => item.Id == materialId) != 0 && gen.BuildCosts.Count(item => Material.GetMaterial(item.Id).Weight == null) == 0).ToList();
 
 				foreach (General general in generals)
 					general.Update();
 			}
 		}
-
-		public static General[] Generals => Load();
-		public static int Count => Generals.Count();
-		public static string NextId => (Generals.Max(gen => Convert.ToInt32(gen.Id)) + 1).ToString();
+		#endregion
 	}
 }

@@ -55,6 +55,7 @@ namespace MindustryConsole
 				
 				string UsedToBuild = string.Join(", ", General.Generals.Where(gen => gen.BuildCosts.Count(item => item.Id == material.Id) != 0).Select(sel => sel.Name));
 				Console.WriteLine("║ ├─┤ Used to build: {0}", UsedToBuild);
+				Console.WriteLine("║8├─┤ Delete");
 				Console.WriteLine("║9├─┤ Save");
 				Console.WriteLine("╚═╧═╧═════════════════{0}", "═".PadRight(material.Id.Length + material.Name.Length, '═'));
 
@@ -63,10 +64,23 @@ namespace MindustryConsole
 				Console.Clear();
 
 				if (select == '0') return;
-				else if (select == '1') material.Name = Formations.SetValue("Name", "string");
-				else if (select == '2') material.Type = Formations.SetValue("Type", "string");
-				else if (select == '3') material.Mod = Formations.SetValue("Mod", "string");
-				else if (select == '4') material.Color = Formations.SetValue("color", "string");
+				else if (select == '1') material.Name = Formations.GetValue("Name", "string");
+				else if (select == '2') material.Type = Formations.GetValue("Type", "string");
+				else if (select == '3') material.Mod = Formations.GetValue("Mod", "string");
+				else if (select == '4') material.Color = Formations.GetValue("Color", "string");
+				else if (select == '8')
+				{
+					Console.WriteLine("═════════╡ TO DELETE {0}? (Y - YES)╞═════════", material.Name.ToUpper());
+					Console.Write("> ");
+					select = Console.ReadKey().KeyChar;
+					Console.Clear();
+
+					if (select.ToString().ToLower() == "y")
+					{
+						material.Delete();
+						return;
+					}
+				}
 				else if (select == '9') { material.Save(); return; }
 				else Formations.NotFound("Action");
 			}
@@ -82,7 +96,7 @@ namespace MindustryConsole
 			List<Item> items = new List<Item>();
 			Material[] materials;
 
-			if (OnlyAvailable) materials = Material.GetAvailable();
+			if (OnlyAvailable) materials = Material.GetAvailable;
 			else materials = Material.Materials;
 
 			do

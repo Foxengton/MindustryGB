@@ -23,15 +23,18 @@ namespace MindustryConsole
 				select = Formations.GetInt(Console.ReadLine());
 				Console.Clear();
 
-				if (select == 0) return;
-				else if (select >= offset && select < General.Generals.Length + offset) Update(General.Generals[select - offset].Id);
+				if (select == 0)
+					return;
+				else if (select >= offset && select < General.Count + offset)
+					Update(General.Generals[select - offset].Id);
 				else if (select > 0)
 				{
 					string id = General.NextId;
 					ManageGeneral.Update(new General { Id = id });
 					Update(id);
 				}
-				else Formations.NotFound("Action");
+				else
+					Formations.NotFound("Action");
 			}
 			while (true);
 		}
@@ -45,66 +48,91 @@ namespace MindustryConsole
 				General general = General.GetGeneral(id);
 				if (general == null) return;
 
-				InputOutput[] inputsOutputs = InputOutput.InputsOutputs.Where(io => io.GeneralId == general.Id).ToArray();
+				InputOutput[] inputsOutputs = general.GetInputOutputs;
+				Power[] powers = general.GetPowers;
 
-				ShowInfo(general, inputsOutputs);
+				ShowInfo(id);
 
-				Console.WriteLine("╔════════╡ UPDATE ╞═══════╗");
-				Console.WriteLine("╟───┐ ┌───────────────────╢");
-				Console.WriteLine("║ 0 ├─┤ Exit              ║");
+				Console.WriteLine("╔═══╤╤╡ UPDATE BUILDING ╞═════╗");
+				Console.WriteLine("║ 0 ├┤ Exit                   ║");
+				Console.WriteLine("║ 1 ├┤ Edit general           ║");
+				Console.WriteLine("╠═══╪╪════════════════════════╝");
 
-				//General
-				if (general != null) Console.WriteLine("║ 1 ├─┤ Edit general      ║");
-				else Console.WriteLine("║ 1 ├─┤ Add general       ║");
+				//Power
+				Console.WriteLine("║2 0├┤ Add Power");
+				for (int i = 0; i < powers.Length; i++)
+					Console.WriteLine("║2 {0}├┤ Edit {1}", i + 1, powers[i]);
 
 				//Input/Output
-				Console.WriteLine("║5 0├─┤ Add Input/Output  ║");
+				Console.WriteLine("║5 0├┤ Add Input/Output");
 				for (int i = 0; i < inputsOutputs.Length; i++)
-				{
-					string input = "";
-					string output = "";
+					Console.WriteLine("║5 {0}├┤ Edit {1}", i + 1, inputsOutputs[i]);
 
-					if (inputsOutputs[i].Inputs != null)
-					input = string.Join(", ", inputsOutputs[i].Inputs.Select(it => it.ToString()));
-
-					if (inputsOutputs[i].Outputs != null)
-						output = string.Join(", ", inputsOutputs[i].Outputs.Select(it => it.ToString()));
-
-					Console.WriteLine("║5 {0}├─┤ Edit {1}/{2} ║", i + 1, input, output);
-				}
-
-				Console.WriteLine("║ 9 ├─┤ Delete            ║");
-				Console.WriteLine("╟───┘ └───────────────────╢");
-				Console.WriteLine("╚═════════════════════════╝");
+				Console.WriteLine("╠═══╪╪════════════════════════╗");
+				Console.WriteLine("║ 8 ├┤ Delete                 ║");
+				Console.WriteLine("╚═══╧╧════════════════════════╝");
 
 				Console.Write("> ");
 				select = Console.ReadLine().Split(' ');
 				Console.Clear();
 
-				if (select[0] == "0") return;
-				else if (select[0] == "1") ManageGeneral.Update(general);
-				else if (select[0] == "5")
+				if (select.First() == "0")
+					return;
+				else if (select.First() == "1")
+					ManageGeneral.Update(general);
+				else if (select.First() == "2")
 				{
 					if (select.Length == 2)
 					{
 						int subaction = Formations.GetInt(select[1]) - 1;
 
-						if (subaction >= 0 && subaction < inputsOutputs.Length) ManageInputOutput.Update(inputsOutputs[subaction]);
-						else if (subaction == -1) ManageInputOutput.Update(new InputOutput { Id = InputOutput.NextId, GeneralId = general.Id });
-						else Formations.NotFound("SubAction");
+						if (subaction >= 0 && subaction < inputsOutputs.Length)
+							ManagePower.Update(powers[subaction]);
+						else if (subaction == -1)
+							ManagePower.Update(new Power { Id = Power.NextId, GeneralId = general.Id });
+						else
+							Formations.NotFound("SubAction");
 					}
-					else Formations.NotFound("SubAction");
+					else
+						Formations.NotFound("SubAction");
 				}
-				else if (select[0] == "9")
+				else if (select.First() == "5")
 				{
-					general.Delete();
-					return;
+					if (select.Length == 2)
+					{
+						int subaction = Formations.GetInt(select[1]) - 1;
+
+						if (subaction >= 0 && subaction < inputsOutputs.Length)
+							ManageInputOutput.Update(inputsOutputs[subaction]);
+						else if (subaction == -1)
+							ManageInputOutput.Update(new InputOutput(general.Id));
+						else
+							Formations.NotFound("SubAction");
+					}
+					else
+						Formations.NotFound("SubAction");
 				}
+				else if (select.First() == "8")
+					Delete(id);
 				else Formations.NotFound("Action");
 			}
 			while (true);
 		}
+		private static void Delete(string id)
+		{
+			General general = General.GetGeneral(id);
+			char select;
 
+			Console.WriteLine("═════════╡ TO DELETE {0}? (Y - YES)╞═════════", general.Name.ToUpper());
+			Console.Write("> ");
+			select = Console.ReadKey().KeyChar;
+			Console.Clear();
+
+			if (select.ToString().ToLower() == "y")
+				general.Delete();
+		}
+
+		//REFACTORING
 		public static string SetItems()
 		{
 			int offset = 3;
@@ -116,8 +144,6 @@ namespace MindustryConsole
 
 			do
 			{
-				amount = 0;
-
 				Console.WriteLine("╔═╤═╤═╡ SET ITEMS ╞═════╗");
 				Console.WriteLine("║0├─┤ Cancel            ║");
 				Console.WriteLine("║1├─┤ Set Null          ║");
@@ -175,41 +201,85 @@ namespace MindustryConsole
 
 		public static void ShowAll(int offset = 0)
 		{
-			Console.WriteLine("┌────┬──────────────────┬──────────────┬───────┬─────────┬───────┬─────┬──────────┬───────────┬────────────┬────────────┐");
-			Console.WriteLine("│ ID │ Name             │ Type         │ Power │ Liquids │ Items │ I/O │ Shooting │ Opt. Enh. │ Mod        │ Weight     │");
-			Console.WriteLine("├────┼──────────────────┼──────────────┼───────┼─────────┼───────┼─────┼──────────┼───────────┼────────────┼────────────┤");
+			Console.WriteLine("┌────┬──────────────────┬──────────────┬───────┬─────┬──────────┬───────────┬────────────┬────────────┐");
+			Console.WriteLine("│ ID │ Name             │ Type         │ Power │ I/O │ Shooting │ Opt. Enh. │ Mod        │ Weight     │");
+			Console.WriteLine("├────┼──────────────────┼──────────────┼───────┼─────┼──────────┼───────────┼────────────┼────────────┤");
 			for (int i = 0; i < General.Count; i++)
 			{
 				General gen = General.Generals[i];
-				InputOutput[] inputOutput = InputOutput.GetGeneralsIO(gen.Id);
+				InputOutput[] inputOutput = gen.GetInputOutputs;
 
 				int id = i + offset;
 				string name = gen.Name.Length > 16 ? gen.Name.Substring(0, 13) + "..." : gen.Name.PadRight(16, ' ');
 				string type = gen.Type;
-				string power = "0";
-				string liquids = "0";
-				string items = "0";
+				string power = gen.GetPowers.Count() != 0 ? gen.GetPowers.First().PowerUse : "";
 
-				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 12} │ {3, 5} │ {4, 7} │ {5, 5} │ {6, 3} │ {7, 8} │ {8, 9} │ {9, 10} │ {10, 10} │", id, name, type, power, liquids, items, inputOutput.Length, 0, 0, gen.Mod, gen.Weight);
+				Console.WriteLine("│ {0,2} │ {1, 16} │ {2, 12} │ {3, 5} │ {4, 3} │ {5, 8} │ {6, 9} │ {7, 10} │ {8, 10} │", id, name, type, power, inputOutput.Length, 0, 0, gen.Mod, gen.Weight);
 			}
-			Console.WriteLine("└────┴──────────────────┴──────────────┴───────┴─────────┴───────┴─────┴──────────┴───────────┴────────────┴────────────┘");
+			Console.WriteLine("└────┴──────────────────┴──────────────┴───────┴─────┴──────────┴───────────┴────────────┴────────────┘");
 		}
 
-		private static void ShowInfo(General general, InputOutput[] inputsOutputs)
+		private static void ShowInfo(string id)
 		{
-			Console.Write("══════════════╡ ");
-			if (general.Id != null) Console.Write("{0}.", general.Id);
-			if (general.Name != null) Console.Write(" {0}", general.Name);
-			if (general.Type != null) Console.Write(" ({0})", general.Type);
-			Console.WriteLine(" ╞══════════════");
-			if (general.Description != null) Console.WriteLine("──────────────────────────────────────────────────\n{0}\n──────────────────────────────────────────────────", general.Description);
-
+			//===== GENERAL =====//
+			General general = General.GetGeneral(id);
+			Console.WriteLine("══════════════╡ {0}. {1} ({2}) ╞══════════════", general.Id, general.Name, general.Type);
+			Console.WriteLine("──────────────────────────────────────────────────\n{0}\n──────────────────────────────────────────────────", general.Description);
 			Formations.Header("GENERAL");
-			if (general.Health != null) Console.WriteLine(" Health: {0}", general.Health);
-			if (general.Size != null) Console.WriteLine(" Size: {0}", general.Size);
-			if (general.BuildTime != null) Console.WriteLine(" Build Time: {0}", general.BuildTime);
-			if (general.BuildCost != null) Console.WriteLine(" Build Cost: {0}", string.Join(", ", general.BuildCosts.Select(sel => sel.ToString())));
+			Console.WriteLine(" Health: {0}", general.Health);
+			Console.WriteLine(" Size: {0}", general.Size);
+			Console.WriteLine(" Build Time: {0}", general.BuildTime);
+			Console.WriteLine(" Build Cost: {0}", string.Join(", ", general.BuildCosts.Select(sel => sel.ToString())));
 			if (general.Weight != null) Console.WriteLine(" Weight: {0}", general.Weight);
+
+			//===== POWER =====//
+			Power[] powers = general.GetPowers;
+
+			if (powers.Length != 0)
+			{
+				Power powerPrev = new Power();
+				string powerUse = string.Empty;
+				string powerGeneration = string.Empty;
+				string powerCapacity = string.Empty;
+
+				foreach (Power power in powers)
+				{
+					if (power.PowerUse != null)
+					{
+						if (powerUse == string.Empty)
+							powerUse = power.PowerUse;
+						else if (power.PowerUse != powerPrev.PowerUse)
+							powerUse += " / " + power.PowerUse;
+					}
+					if (power.PowerGeneration != null)
+					{
+						if (powerGeneration == string.Empty)
+							powerGeneration = power.PowerGeneration;
+						else if (power.PowerGeneration != powerPrev.PowerGeneration)
+							powerGeneration += " / " + power.PowerGeneration;
+					}
+					if (power.PowerCapacity != null)
+					{
+						if (powerCapacity == string.Empty)
+							powerCapacity = power.PowerCapacity;
+						else if (power.PowerCapacity != powerPrev.PowerCapacity)
+							powerCapacity += " / " + power.PowerCapacity;
+					}
+
+					powerPrev = power;
+				}
+
+				Formations.Header("POWER");
+				if (powerUse != string.Empty)
+					Console.WriteLine(" Power Use: {0} power units/second", powerUse);
+				if (powerGeneration != string.Empty)
+					Console.WriteLine(" Power Generation: {0} power units/second", powerGeneration);
+				if (powerCapacity != string.Empty)
+					Console.WriteLine(" Power Capacity: {0} power units", powerCapacity);
+			}
+
+			//===== INPUT/OUTPUT =====//
+			InputOutput[] inputsOutputs = general.GetInputOutputs;
 
 			if (inputsOutputs.Length != 0)
 			{
@@ -218,19 +288,19 @@ namespace MindustryConsole
 
 				for (int i = 0; i < inputsOutputs.Length; i++)
 				{
-					if (inputsOutputs[i].Input != null)
+					if (inputsOutputs[i].Inputs != null)
 					{
 						if (input == string.Empty)
 							input = string.Join(", ", inputsOutputs[i].Inputs.Select(sel => sel.ToString()));
-						else if (inputsOutputs[i].Input != inputsOutputs[i - 1].Input)
+						else if (inputsOutputs[i].Inputs != inputsOutputs[i - 1].Inputs)
 							input += " / " + string.Join(", ", inputsOutputs[i].Inputs.Select(sel => sel.ToString()));
 					}
-					if (inputsOutputs[i].Output != null)
+					if (inputsOutputs[i].Outputs != null)
 					{
 						if (output == string.Empty)
 							output = string.Join(", ", inputsOutputs[i].Outputs.Select(sel => sel.ToString()));
-						else if (inputsOutputs[i].Output != inputsOutputs[i - 1].Output)
-							output += "/ " + string.Join(", ", inputsOutputs[i].Outputs.Select(sel => sel.ToString()));
+						else if (inputsOutputs[i].Outputs != inputsOutputs[i - 1].Outputs)
+							output += " / " + string.Join(", ", inputsOutputs[i].Outputs.Select(sel => sel.ToString()));
 					}
 				}
 
