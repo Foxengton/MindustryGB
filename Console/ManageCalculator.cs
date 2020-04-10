@@ -9,36 +9,40 @@ namespace MindustryConsole
 	{
 		public static void Menu()
 		{
-			char select;
+			FindItem();
 
-			do
-			{
-				Console.WriteLine("╔═╤═╤═╡ SCHEMATIC MENU ╞═════╗");
-				Console.WriteLine("║0├─┤ Exit                   ║");
-				Console.WriteLine("║1├─┤ Find Item              ║");
-				Console.WriteLine("║2├─┤ Check Schematic        ║");
-				Console.WriteLine("╚═╧═╧════════════════════════╝");
-				Console.Write("> ");
-				select = Console.ReadKey().KeyChar;
-				Console.Clear();
+			//char select;
 
-				if (select == '0') return;
-				else if (select == '1') CreateSchematic();
-				else if (select == '2') CheckSchematic();
-				else Formations.NotFound("Action");
-			}
-			while (true);
+			//do
+			//{
+			//	Console.WriteLine("╔═╤╤══╡ SCHEMATIC MENU ╞═════╗");
+			//	Console.WriteLine("║0├┤ Exit                    ║");
+			//	Console.WriteLine("║1├┤ Find Item               ║");
+			//	Console.WriteLine("╚═╧╧═════════════════════════╝");
+			//	Console.Write("> ");
+			//	select = Console.ReadKey().KeyChar;
+			//	Console.Clear();
+
+			//	if (select == '0')
+			//		return;
+			//	else if (select == '1')
+			//		FindItem();
+			//	else
+			//		Formations.NotFound("Action");
+			//}
+			//while (true);
 		}
 
-		private static void CreateSchematic()
+		private static void FindItem()
 		{
-			Item targetItem = ManageMaterial.SetItems(true).First();
+			Item targetItem = ManageMaterial.SetItems(true).First(); //TODO заменить функцию выбора предмета.
 			List<Summary> summaries = new List<Summary> { new Summary
 			{
 				Id = targetItem.Id,
 				Outcome = targetItem.Amount,
-				Name = Material.GetMaterial(targetItem.Id).Name,
+				Name = Material.GetMaterial(targetItem.Id).Name //TODO добавить в Item функцию получения материала.
 			}};
+
 			List<Factory> factories = new List<Factory>();
 
 			bool repeat;
@@ -48,10 +52,10 @@ namespace MindustryConsole
 
 				for (int s = 0; s < summaries.Count; s++)
 				{
+					if (summaries[s].Blocked || summaries[s].Conveyor) continue;
+
 					Summary summary = summaries[s];
 					double ratio = summary.Income - summary.Outcome;
-
-					if (summary.Blocked || summary.Conveyor) continue;
 
 					if (ratio < 0)
 					{
@@ -61,11 +65,13 @@ namespace MindustryConsole
 						int inputOutputsIndex = 0;
 						InputOutput[] inputOutputs = InputOutput.InputsOutputs.Where(io => io.Outputs != null && io.Outputs.Count(it => it.Id == summary.Id) != 0).ToArray();
 						
-						if (inputOutputs.Length == 0) inputOutputsIndex = -1;
+						if (inputOutputs.Length == 0)
+							inputOutputsIndex = -1;
 						else if (inputOutputs.Length > 0)
 						{
 							int offset = 2;
 							int select;
+
 							do
 							{
 								Console.WriteLine("╔═╤═╤═╡ SELECT FACTORY ({0}) ╞═════", summary.Name.ToUpper());
@@ -78,7 +84,8 @@ namespace MindustryConsole
 								select = Formations.GetInt(Console.ReadKey().KeyChar.ToString());
 								Console.Clear();
 
-								if (select == 0) return;
+								if (select == 0)
+									return;
 								else if (select == 1)
 								{
 									inputOutputsIndex = -1;
@@ -89,7 +96,8 @@ namespace MindustryConsole
 									inputOutputsIndex = select - offset;
 									break;
 								}
-								else Formations.NotFound("Action");
+								else
+									Formations.NotFound("Action");
 							}
 							while (true);
 						}
@@ -103,7 +111,8 @@ namespace MindustryConsole
 							select = Formations.GetDouble(Console.ReadLine());
 							Console.Clear();
 
-							if (select <= 0) return;
+							if (select <= 0)
+								return;
 							
 							summary.Income = select;
 							summary.Conveyor = true;
@@ -140,113 +149,6 @@ namespace MindustryConsole
 			while (repeat);
 
 			CorrectSchematic(summaries, factories);
-		}
-
-		private static void CheckSchematic()
-		{
-			int select = 0;
-			List<Factory> factories = new List<Factory>();
-			List<Summary> summaries;
-			List<string> blockMaterials = SetBlock();
-
-			do
-			{
-				summaries = new List<Summary>();
-
-				foreach (string io in blockMaterials)
-					summaries.Add(new Summary { Id = io, Name = Material.GetMaterial(io).Name, Blocked = true});
-
-				//===== SETUP VALUES ======//
-				foreach(Factory factory in factories)
-				{
-					factory.Ratio = 1;
-
-					summaries = EditSummaries(summaries, factory);
-				}
-
-				ShowInfo(summaries, factories);
-
-				Console.WriteLine("╔═╤═╤═╡ CHECK SСHEMATIC MENU ╞═════╗");
-				Console.WriteLine("║0├─┤ Exit                         ║");
-				Console.WriteLine("║1├─┤ Add Factory                  ║");
-				Console.WriteLine("╚═╧═╧══════════════════════════════╝");
-				Console.Write("> ");
-				select = Formations.GetInt(Console.ReadLine());
-				Console.Clear();
-
-				if (select == 0) return;
-				else if (select == 1)
-				{
-					string factory = ManageBuilding.SetItems();
-
-					factories.ForEach(x => x.Ratio = 1);
-
-					if (factory != null && factory != "")
-					{
-						string id = factory.Split(' ').First();
-						double amount = Convert.ToDouble(factory.Split(' ').Last());
-
-						factories.Add(new Factory
-						{
-							Id = id,
-							Name = General.GetGeneral(id).Name,
-							Amount = Convert.ToDouble(amount),
-							Input = General.GetGeneral(id).GetInputOutputs.First().InputsPerSecond,
-							Output = General.GetGeneral(id).GetInputOutputs.First().OutputsPerSecond,
-							Ratio = 1
-						});
-					}
-				}
-				else if (select == 2) CorrectSchematic(summaries, factories);
-				else Formations.NotFound("Action");
-			}
-			while (true);
-		}
-
-		private static List<string> SetBlock()
-		{
-			List<string> blocks = new List<string>();
-			int offset = 2;
-			int select;
-
-			do
-			{
-				Console.WriteLine("╔═╤═╤═╡ SCHEMATIC MENU ╞═════╗");
-				Console.WriteLine("║0├─┤ Exit                   ║");
-				Console.WriteLine("║1├─┤ Done                   ║");
-				Console.WriteLine("╚═╧═╧════════════════════════╝");
-				Console.WriteLine("┌────┬──────────────────────┬───────┐");
-				Console.WriteLine("│ ID │ Name                 │ Block │");
-				Console.WriteLine("├────┼──────────────────────┼───────┤");
-				Material[] materials = Material.Materials.Where(mat => mat.Weight != null).ToArray();
-				for (int i = 0; i < materials.Length; i++)
-				{
-					Material mat = materials[i];
-					int id = i + offset;
-					string name = mat.Name.PadRight(20, ' ');
-
-					Console.WriteLine("│ {0,2} │ {1, 20} │ {2, 5} │", id, name, blocks.Contains(mat.Id) ? "Block" : "");
-				}
-				Console.WriteLine("└────┴──────────────────────┴───────┘");
-
-				Console.Write("> ");
-				select = Formations.GetInt(Console.ReadLine());
-				Console.Clear();
-
-				if (select == 0) return null;
-				else if (select == 1) return blocks;
-				else if (select >= offset && select < materials.Length + offset)
-				{
-					select -= offset;
-
-					if (blocks.Contains(materials[select].Id))
-						blocks.Remove(materials[select].Id);
-					else
-						blocks.Add(materials[select].Id);
-				}
-				else Formations.NotFound("Action");
-			}
-			while (true);
 		}
 
 		private static List<Summary> EditSummaries(List<Summary> summaries, Factory factory)
